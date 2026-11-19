@@ -79,7 +79,9 @@ export async function POST(request: Request): Promise<Response> {
       hashIp(clientIp(request.headers)),
       readRateLimitConfig(),
     );
-  } catch {
+  } catch (error) {
+    // 原因を追えるように、種類だけを出す(入力・返答・IP の中身は出さない)
+    console.error("reserve failed", error instanceof Error ? error.name : "unknown");
     return errorResponse("failed", 500);
   }
   if (!reservation.ok) {
@@ -106,6 +108,11 @@ export async function POST(request: Request): Promise<Response> {
     if (error instanceof OpenRouterError && (error.status === 402 || error.status === 403)) {
       return errorResponse("limit", 503);
     }
+    // 種類だけを出す(入力・返答の中身は出さない)
+    console.error(
+      "counsel failed",
+      error instanceof OpenRouterError ? `${error.kind} ${error.status ?? ""}`.trim() : "unknown",
+    );
     return errorResponse("failed", 500);
   }
 }

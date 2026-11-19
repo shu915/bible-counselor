@@ -214,13 +214,16 @@ describe("generateCounsel", () => {
     expect(system).toContain("電話番号・相談窓口の名前・受付時間は、書かない");
   });
 
-  it("全体の締め切り(signal)を、OpenRouter の呼び出しに渡す。なければ、渡さない", async () => {
+  it("全体の締め切り(signal)を、OpenRouter の呼び出しに渡す。なければ、渡さない。1回の待ち時間は、50秒", async () => {
     chat.chatText.mockResolvedValue({ text: goodJson(), usage: {} });
     const controller = new AbortController();
     await generateCounsel("悩み", { signal: controller.signal });
-    expect(chat.chatText.mock.calls[0][1]).toEqual({ signal: controller.signal });
+    expect(chat.chatText.mock.calls[0][1]).toEqual({
+      timeoutMs: 50_000,
+      signal: controller.signal,
+    });
     await generateCounsel("悩み");
-    expect(chat.chatText.mock.calls[1][1]).toEqual({});
+    expect(chat.chatText.mock.calls[1][1]).toEqual({ timeoutMs: 50_000 });
   });
 
   it("空の悩み・長すぎる悩みは、モデルを呼ばずに断る", async () => {
