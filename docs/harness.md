@@ -2,7 +2,7 @@
 
 ## テストと検証
 
-- テストは Vitest(`src/**/*.test.{ts,tsx}` と `scripts/**/*.test.ts`)。CI も手元も、`npm test` で全部を実行する。実データのテストは、XML が無いと、黙って飛ばさず失敗する(先に `npm run bible:fetch`)
+- テストは Vitest(`src/**/*.test.{ts,tsx}` と `scripts/**/*.test.ts`)。CI も手元も、`npm test` で全部を実行する。
 - 実装後は hooks が tsc・lint・test を自動で実行する(`build` と整形のチェックは対象外)
 - `npm run check` = lint + format:check + typecheck(**テストは含まない**)。コミット前に `npm run format` をかけると、CI の整形チェックで落ちない
 - **挙動を変えたら `evaluator` を呼ぶ**(最大5周。同じ指摘が再発したら止める)。報告には、検証していない範囲と、人間向けの確認手順を書く
@@ -10,7 +10,7 @@
 
 ## CI(`.github/workflows/ci.yml`)
 
-PR と main への push で、次を実行する: `npm ci` → lint → format:check → `bible:fetch`(出典の XML を取得して、チェックサムを確かめる)→ test → typegen → typecheck → build。実 DB(pgvector)を使うテストを書いたら、`services: postgres` を足す。
+PR と main への push で、次を実行する: `npm ci` → lint → format:check → test → typegen → typecheck → build。
 
 ## 依存
 

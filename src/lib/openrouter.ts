@@ -5,17 +5,11 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { z } from "zod";
 
-// エンベディングのモデル。**環境変数にしない**(変えると、DB の全件を入れ直す必要がある)。
-// 文書側(DB 投入)と検索側(ユーザーの質問)で、必ず同じモデルを使うため、ここに1つだけ置く。
-// 次元数は、DB の `embedding vector(1536)` と一致していなければならない
-export const EMBEDDING_MODEL = "openai/text-embedding-3-small";
-export const EMBEDDING_DIMENSIONS = 1536;
-
-// 生成のモデル。変えても DB のデータに影響しないので、環境変数(OPENROUTER_CHAT_MODEL)で入れ替えられる
+// 生成のモデル(予備)。環境変数(OPENROUTER_CHAT_MODEL)で入れ替えられる
 export const DEFAULT_CHAT_MODEL = "google/gemini-4-hydrogen";
 
 const BASE_URL = "https://openrouter.ai/api/v1";
-// 1回の呼び出しの待ち時間の上限。ベクトル化は 60 秒。文章の生成(chat)は、相談1件で何度も呼ぶので、短く 30 秒にする
+// 1回の呼び出しの待ち時間の上限。chat は、既定で 30 秒にする
 const REQUEST_TIMEOUT_MS = 60_000;
 const CHAT_TIMEOUT_MS = 30_000;
 const MAX_ATTEMPTS = 3;
@@ -67,9 +61,9 @@ export class OpenRouterError extends Error {
 export interface RequestOptions {
   // 失敗したときの、やり直しの待ち時間の基準(ミリ秒。回ごとに2倍になる)。テストで 0 にする
   retryBaseDelayMs?: number;
-  // 1回の呼び出しの待ち時間の上限(ミリ秒)。ベクトル化は 60 秒、chat は 30 秒が既定
+  // 1回の呼び出しの待ち時間の上限(ミリ秒)。chat は 30 秒が既定
   timeoutMs?: number;
-  // 接続の失敗・タイムアウトのときに、やり直すか。ベクトル化は既定で「やり直す」(安いので)。
+  // 接続の失敗・タイムアウトのときに、やり直すか。
   // chat は既定で「やり直さない」: タイムアウトしても、相手が処理を続けて、課金されていることがあり、
   // 再送すると、同じ相談で何回分も課金されるため
   retryOnNetworkError?: boolean;
@@ -185,72 +179,6 @@ async function postJson(path: string, body: unknown, options: RequestOptions): P
       throw new OpenRouterError("OpenRouter の返答が JSON ではありません", response.status);
     }
   }
-}
-
-// ---- エンベディング ----
-
-// 返ってきた JSON は、外から来るデータなので、検証してから使う
-const embeddingResponseSchema = z.object({
-  data: z.array(
-    z.object({
-      embedding: z.array(z.number()),
-      index: z.number().int().optional(),
-    }),
-  ),
-});
-
-// 文字列の配列を、まとめてベクトルにする。返す順序は、入力と同じ。
-// 文書側は100件ずつなどまとめて送り、検索側は1件だけ送る。
-// モデルは EMBEDDING_MODEL に固定(文書側と検索側で、必ず同じモデルにするため、引数で変えられない)
-export async function embedTexts(
-  texts: readonly string[],
-  options: RequestOptions = {},
-): Promise<number[][]> {
-  if (texts.length === 0) return [];
-  if (texts.some((text) => text.trim() === "")) {
-    throw new RangeError("空の文字列は、エンベディングにできません");
-  }
-
-  const body = await postJson(
-    "/embeddings",
-    {
-      model: EMBEDDING_MODEL,
-      input: texts,
-      encoding_format: "float",
-      // 入力を、データを集める事業者に送らない
-      provider: { data_collection: "deny" },
-    },
-    options,
-  );
-  return parseEmbeddings(body, texts.length, EMBEDDING_DIMENSIONS);
-}
-
-function parseEmbeddings(
-  body: unknown,
-  expectedCount: number,
-  expectedDimensions: number,
-): number[][] {
-  const parsed = embeddingResponseSchema.safeParse(body);
-  if (!parsed.success) throw new OpenRouterError("OpenRouter の返答の形式が想定と違います");
-
-  const items = parsed.data.data;
-  if (items.length !== expectedCount) {
-    throw new OpenRouterError("OpenRouter の返答の件数が、入力と違います");
-  }
-
-  // 順序は保証されていると明記されていないので、index があれば、それで並べ直す
-  const ordered = items.every((item) => item.index !== undefined)
-    ? [...items].sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
-    : items;
-
-  return ordered.map((item) => {
-    if (item.embedding.length !== expectedDimensions) {
-      throw new OpenRouterError(
-        `ベクトルの次元数が違います(${item.embedding.length}。期待は ${expectedDimensions})`,
-      );
-    }
-    return item.embedding;
-  });
 }
 
 // ---- 文章の生成 ----

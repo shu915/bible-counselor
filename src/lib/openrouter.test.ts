@@ -1,18 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  DEFAULT_CHAT_MODEL,
-  EMBEDDING_DIMENSIONS,
-  EMBEDDING_MODEL,
-  OpenRouterError,
-  chatText,
-  embedTexts,
-  withAiCallCounter,
-} from "./openrouter";
+import { DEFAULT_CHAT_MODEL, OpenRouterError, chatText, withAiCallCounter } from "./openrouter";
 
 // 本物の OpenRouter は呼ばない(fetch を差し替える)。実際に呼ぶテストは openrouter.live.test.ts
 
-const vector = (value: number): number[] =>
-  Array.from({ length: EMBEDDING_DIMENSIONS }, () => value);
 const jsonResponse = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
@@ -27,124 +17,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
-});
-
-describe("embedTexts(リクエスト)", () => {
-  it("モデル・入力・data_collection: deny を送り、キーを Authorization に付ける", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ data: [{ embedding: vector(0.1), index: 0 }] }));
-    await embedTexts(["こんにちは"]);
-
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("https://openrouter.ai/api/v1/embeddings");
-    expect(init?.headers).toMatchObject({ Authorization: "Bearer test-key" });
-    expect(JSON.parse(String(init?.body))).toEqual({
-      model: EMBEDDING_MODEL,
-      input: ["こんにちは"],
-      encoding_format: "float",
-      provider: { data_collection: "deny" },
-    });
-  });
-
-  it("空の配列は、通信せずに空の配列を返す", async () => {
-    expect(await embedTexts([])).toEqual([]);
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("空の文字列は、通信せずに断る", async () => {
-    await expect(embedTexts(["あ", "  "])).rejects.toThrow(RangeError);
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
-  it("キーが無いときは、通信せずに止まる", async () => {
-    vi.stubEnv("OPENROUTER_API_KEY", "");
-    await expect(embedTexts(["あ"])).rejects.toThrow("OPENROUTER_API_KEY");
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-});
-
-describe("embedTexts(返答)", () => {
-  it("index の順に並べ直して、入力と同じ順序で返す", async () => {
-    fetchMock.mockResolvedValueOnce(
-      jsonResponse({
-        data: [
-          { embedding: vector(2), index: 1 },
-          { embedding: vector(1), index: 0 },
-        ],
-      }),
-    );
-    const result = await embedTexts(["a", "b"]);
-    expect(result[0][0]).toBe(1);
-    expect(result[1][0]).toBe(2);
-  });
-
-  it("件数が入力と違えば、止まる", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ data: [{ embedding: vector(1), index: 0 }] }));
-    await expect(embedTexts(["a", "b"])).rejects.toThrow("件数");
-  });
-
-  it("次元数が違えば、止まる(DB の vector(1536) に入らない)", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ data: [{ embedding: [0.1, 0.2], index: 0 }] }));
-    await expect(embedTexts(["a"])).rejects.toThrow("次元数");
-  });
-
-  it("返答の形が違えば、止まる", async () => {
-    fetchMock.mockResolvedValueOnce(jsonResponse({ data: "x" }));
-    await expect(embedTexts(["a"])).rejects.toThrow(OpenRouterError);
-  });
-});
-
-describe("embedTexts(失敗とやり直し)", () => {
-  it("429 は、やり直して成功する", async () => {
-    fetchMock
-      .mockResolvedValueOnce(jsonResponse({ error: "busy" }, 429))
-      .mockResolvedValueOnce(jsonResponse({ data: [{ embedding: vector(1), index: 0 }] }));
-    const result = await embedTexts(["a"], { retryBaseDelayMs: 0 });
-    expect(result).toHaveLength(1);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
-
-  it("接続の失敗も、やり直す", async () => {
-    fetchMock
-      .mockRejectedValueOnce(new TypeError("fetch failed"))
-      .mockResolvedValueOnce(jsonResponse({ data: [{ embedding: vector(1), index: 0 }] }));
-    await embedTexts(["a"], { retryBaseDelayMs: 0 });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
-
-  it("3回失敗したら、状態つきの例外にする", async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ error: "down" }, 503));
-    const error = await embedTexts(["a"], { retryBaseDelayMs: 0 }).catch((e: unknown) => e);
-    expect(error).toBeInstanceOf(OpenRouterError);
-    expect((error as OpenRouterError).status).toBe(503);
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-  });
-
-  it("402(上限に達した)や 401(キーが違う)は、やり直さない", async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ error: "limit" }, 402));
-    await expect(embedTexts(["a"], { retryBaseDelayMs: 0 })).rejects.toMatchObject({ status: 402 });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("embedTexts(入力を出さない)", () => {
-  const secret = "上司に言えない秘密の悩み";
-
-  it("失敗の例外に、入力の中身もキーも含まれない", async () => {
-    fetchMock.mockResolvedValue(
-      // 相手が、入力を返答に含めて返してきた場合でも、メッセージには出さない
-      jsonResponse({ error: { message: `bad input: ${secret}` } }, 400),
-    );
-    const error = await embedTexts([secret], { retryBaseDelayMs: 0 }).catch((e: unknown) => e);
-    expect(String(error)).not.toContain(secret);
-    expect(String(error)).not.toContain("test-key");
-  });
-
-  it("接続の失敗の例外にも、入力の中身もキーも含まれない", async () => {
-    fetchMock.mockRejectedValue(new TypeError(`fetch failed ${secret} test-key`));
-    const error = await embedTexts([secret], { retryBaseDelayMs: 0 }).catch((e: unknown) => e);
-    expect(String(error)).not.toContain(secret);
-    expect(String(error)).not.toContain("test-key");
-  });
 });
 
 describe("chatText(リクエスト)", () => {
@@ -264,6 +136,14 @@ describe("chatText(返答と失敗)", () => {
     expect(String(error)).not.toContain(secret);
     expect(String(error)).not.toContain("test-key");
   });
+
+  it("接続の失敗の例外にも、相談文もキーも含まれない", async () => {
+    const secret = "上司に言えない秘密の悩み";
+    fetchMock.mockRejectedValue(new TypeError(`fetch failed ${secret} test-key`));
+    const error = await chatText({ user: secret, maxTokens: 10 }).catch((e: unknown) => e);
+    expect(String(error)).not.toContain(secret);
+    expect(String(error)).not.toContain("test-key");
+  });
 });
 
 describe("chat は、接続の失敗・タイムアウトで再送しない(二重課金を避ける)", () => {
@@ -285,15 +165,13 @@ describe("chat は、接続の失敗・タイムアウトで再送しない(二�
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("呼び出しには、タイムアウトの合図(signal)を付ける。既定は、ベクトル化(60秒)より短い", async () => {
+  it("呼び出しには、タイムアウトの合図(signal)を付ける。既定は 30 秒", async () => {
     const spy = vi.spyOn(AbortSignal, "timeout");
     // Response の本文は1回しか読めないので、呼び出しのたびに、新しく作って返す
     fetchMock.mockImplementation(() => Promise.resolve(jsonResponse(ok)));
     await chatText({ user: "x", maxTokens: 10 });
     await chatText({ user: "x", maxTokens: 10 }, { timeoutMs: 5000 });
-    fetchMock.mockResolvedValueOnce(jsonResponse({ data: [{ embedding: vector(1), index: 0 }] }));
-    await embedTexts(["a"]);
-    expect(spy.mock.calls.map((call) => call[0])).toEqual([30_000, 5000, 60_000]);
+    expect(spy.mock.calls.map((call) => call[0])).toEqual([30_000, 5000]);
     spy.mockRestore();
   });
 
@@ -328,14 +206,6 @@ describe("chat の 5xx の再送は、429 と 503 だけ(二重課金を避け�
     fetchMock.mockReset();
     fetchMock.mockResolvedValueOnce(jsonResponse({}, 503)).mockResolvedValueOnce(jsonResponse(ok));
     await chatText({ user: "x", maxTokens: 10 }, { retryBaseDelayMs: 0 });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-  });
-
-  it("ベクトル化は、これまでどおり、5xx 全般をやり直す", async () => {
-    fetchMock
-      .mockResolvedValueOnce(jsonResponse({}, 502))
-      .mockResolvedValueOnce(jsonResponse({ data: [{ embedding: vector(1), index: 0 }] }));
-    await embedTexts(["a"], { retryBaseDelayMs: 0 });
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
@@ -522,10 +392,6 @@ describe("返答が JSON でないとき", () => {
   it("200 で HTML などが返っても、OpenRouterError にする(中身は出さない)", async () => {
     const html = "<html>混雑中 上司に言えない秘密の悩み</html>";
     fetchMock.mockResolvedValue(new Response(html, { status: 200 }));
-    const error = await embedTexts(["a"]).catch((e: unknown) => e);
-    expect(error).toBeInstanceOf(OpenRouterError);
-    expect(String(error)).not.toContain("上司に言えない秘密の悩み");
-
     const chatError = await chatText({ user: "x", maxTokens: 10 }).catch((e: unknown) => e);
     expect(chatError).toBeInstanceOf(OpenRouterError);
   });
