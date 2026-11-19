@@ -108,6 +108,8 @@ const MAX_VERSES = 10;
 const MAX_VERSE_CHARS = 600;
 // 画面に出す箇所の数
 const MAX_PASSAGES = 3;
+// 生成の1回の待ち時間(ミリ秒)。route.ts の全体の締め切り(55秒)より、少し短くする
+const GENERATION_TIMEOUT_MS = 50_000;
 
 export interface GeneratedPassage {
   // 「書名 章:節」の表示用
@@ -238,7 +240,8 @@ export async function generateCounsel(
       // 聖書の知識と、書く力が要る仕事。OPENROUTER_WRITING_MODEL があれば、そのモデルを使う
       purpose: "writing",
     },
-    options.signal ? { signal: options.signal } : {},
+    // 出力が長く、20〜40 秒かかるので、1回の待ち時間は、既定の 30 秒より長くする(全体の締め切りは、呼び出し側の signal)
+    { timeoutMs: GENERATION_TIMEOUT_MS, ...(options.signal ? { signal: options.signal } : {}) },
   );
   return { ...parseCounsel(text), usage };
 }

@@ -51,7 +51,13 @@ function CrisisNotice({ size }: { size: "panel" | "aside" }) {
     <>
       {CRISIS_MESSAGE.map((line, i) => (
         <p key={i} className={`${text} leading-[1.95] ${line.emphasis ? "font-bold" : ""}`}>
-          {line.text}
+          {line.href ? (
+            <a href={line.href} rel="noreferrer" className="underline underline-offset-4">
+              {line.text}
+            </a>
+          ) : (
+            line.text
+          )}
         </p>
       ))}
     </>
