@@ -1,0 +1,51 @@
+# 進捗(Bible Counselor)
+
+最終更新: 2026-11-19
+
+## 経緯(詳しくは CLAUDE.md)
+
+- Bible_RAG_Counselor(タグ `rag-final`)から、必要な分を `git archive` でコピーして作った。RAG は外し、LLM だけ。DB はなし(回数制限の記録だけ Upstash Redis)
+- 履歴は引き継いでいない(参照元の main の履歴に、口語訳の XML が残っているため)
+
+## できていること(コミット前。まだ git の履歴はない)
+
+- 画面一式(Claude Design の見本を反映。昼夜の切り替え・アイコン・noindex・フォント)
+- 安全(命の危険のキーワード検出・固定画面・命が失われる節のコード検査・電話番号の除去)
+- 生成: LLM が、箇所の選択・本文(口語訳)・解説・結論を、1回の呼び出しで作る(src/lib/generate-counsel.ts)
+- 回数制限: Upstash Redis の `INCR`/`DECR`(src/lib/rate-limit.ts、counter-store.ts)。IP ごと・全体の 1 日の枠。AI に届かなかった失敗は戻す
+- テスト 231 件が通る。`npm run check`・`npm run build` が通る
+
+## まだ(次にやる)
+
+1. (済み)ロックファイルを置いた(`@rolldown/binding-*` が入っている)。`npm ci`・`npm run check`・テスト 231 件・ビルドが通る
+2. **実際の AI での確認**: `.env.local` に `OPENROUTER_API_KEY` を書いて、`npm run counsel` で、いくつかの入力(軽い悩み・体調・怒り・現代の話題)を試す。箇所が気持ちに合うか、解説がこじつけでないかを、目で見る(口語訳との一字一句の一致は重視しない)
+3. 最初のコミットと、GitHub のリポジトリ作成。main の保護(Ruleset `protect-main`)、CI の `check` を必須にする
+4. `evaluator`(規則では、挙動を変えたら呼ぶ)
+5. 公開の前: 窓口の名前と番号(人が公式の情報で確認)、Upstash の追加(Vercel の Marketplace)、Vercel の環境変数(`RATE_LIMIT_SALT`・本番用の API キー・Redis)、デプロイ後の確認(`VERCEL` があるか、2つの回線で、別々の IP の枠になるか)、noindex を外すタイミング、注意書きの文面の確認、口語訳の本文を画面に出すことの可否
+
+## 取り残し(動くが、不要なもの)
+
+- `src/lib/openrouter.ts` の `embedTexts`・`EMBEDDING_MODEL`(とテスト)。埋め込みは使わない。テストが、他の確認と絡んでいるので、慎重に外す
+- `data/`(取得した聖書の XML と、生成した JSON)。このリポジトリでは使わない。`.gitignore` で除外してあるので、手で消してよい
+- Docker のボリューム `bible_counselor_db_data`。使わない。`docker volume rm` で消してよい
+
+## 将来の課題
+
+- 本文の正確さ: LLM が書く本文の、口語訳との一致を測る(正解の組を作る)。必要なら、本文の検証の仕組みを足す(別の道具で)
+- 質の改善の候補(参照元の観察): 視点を広げる箇所の追加、合わないときに少なく返す(今は、プロンプトで頼んでいる)
+
+## 次のセッションの最初に
+
+1. このファイルと CLAUDE.md を読む(CLAUDE.md の「経緯」に、なぜ RAG を外したかがある)
+2. `.env.local` に `OPENROUTER_API_KEY` があるか、ユーザーに確かめる(環境変数のファイルは、私は読めない)
+3. 「まだ(次にやる)」の 2 から始める: `npm run counsel` で、いくつかの入力を試し、**選ばれた箇所が気持ちに合うか、解説がこじつけでないか**を見る。口語訳との一字一句の一致は、重視しない(存在しない節・意味違いだけ報告)
+4. 最初のコミットの前に、`git status` と `git ls-files` で、`data/`・環境変数のファイル・生成物が入っていないかを、ユーザーに見せる
+
+## つまずいたことのメモ(技術)
+
+- `next/font/google` の日本語フォントは、`next dev`(Turbopack)で、「Module not found: @vercel/turbopack-next/internal/font/google/font」で落ちる(build は通る)。→ 削った woff2 を `src/app/fonts/` に置いて、`next/font/local`(済み)
+- macOS の npm は、ロックから `@rolldown/binding-*` を落とす。→ 空のフォルダで `npm install --package-lock-only` して、人がロックを置く(ガードの対象)
+- Tailwind の `light-dark()` は、ビルド時に、古いブラウザでも動く形に変換される(`@supports` の保険は、要らない)
+- ガードは、`rm -r`、ボリュームを消す docker のコマンド、ロックや聖書のデータの書き込み、環境変数のファイルを含むコマンドを止める。迂回せず、人にお願いする。コマンドの中の文字列にも反応するので、メモの文面にも、気をつける
+- zsh は、変数を単語に分けない(配列で渡す)。`&&` でつなぐと、ガードが誤検知することがある
+- 検索エンジンに載せない設定(noindex)が入っている。広く公開するときに、`next.config.ts` と `layout.tsx` の両方から外す
