@@ -56,7 +56,7 @@ function buildNotices(shelf: ShelfId): readonly { title: string; body: string }[
 // いつも見せる、最小限の行(詳しい説明は、折りたたむ)。読まれないほど長くしない
 function buildSummary(shelf: ShelfId): readonly string[] {
   return [
-    `悩みのほかに、人物や書物を指名して、聞くこともできます。たとえば、${SHELF_INFO[shelf].askExamples}`,
+    `悩みのほかに、${SHELF_INFO[shelf].askKinds}を指名して、聞くこともできます。たとえば、${SHELF_INFO[shelf].askExamples}(存命の方や、亡くなって70年がたっていない方の言葉は、引用できません)`,
     "相談は無料です(管理人の AI の利用枠を、少し使います)。1日に使える回数には、上限があります。",
     "書いた内容と、AI の返答は、このサイトでは保存しません。ただし、AI の事業者には送られます。画面を閉じると消え、同じ文章は、もう作れません。必要なら、ご自身で保管してください。",
     "AI は、間違えることがあります。見当違いな答えが返ってくることもあります。大事なところは、ご自身で確かめてください。",

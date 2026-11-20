@@ -272,9 +272,22 @@ describe("人物や書物の指名", () => {
     const year = new Date().getFullYear() - 71;
     expect(classicsSystem).toContain("著作権が切れている人(" + year + "年以前に亡くなった人");
     expect(classicsSystem).toContain("夏目漱石");
+    // 心理学・精神分析も、この棚の範囲。概念(トリックスターなど)は、描かれた物語から選ぶ
+    expect(classicsSystem).toContain("心理学・精神分析");
+    expect(classicsSystem).toContain("概念や原型や思想の用語");
+    expect(classicsSystem).toContain("開かれた社会");
+    expect(classicsSystem).toContain("ユングなど");
+    // 考え方は、自分の言葉の説明として、解説に書いてよい(引用でない)
+    expect(classicsSystem).toContain("考え方は紹介する");
+    expect(classicsSystem).toContain("最初の箇所の解説で、その人の考えを、1〜2文で紹介する");
+    // 存命の学者のときは、紹介しない(存命の人物の規則を優先)。危険な思想の用語は、無理に答えない
+    expect(classicsSystem).toContain("存命の学者のときは、紹介しない");
+    expect(classicsSystem).toContain("人を傷つける・欺く思想の用語は、無理に答えず");
     // 経済学者・社会思想家(マルクス・スミス・ウェーバーなど)の受け皿は、この棚
     expect(classicsSystem).toContain("マルクス・アダム・スミス・ウェーバー");
-    expect(classicsSystem).toContain("経済学者・社会学者・歴史家・哲学者も、この棚で扱う");
+    expect(classicsSystem).toContain(
+      "経済学者・社会学者・歴史家・心理学者・哲学者も、この棚で扱う",
+    );
     expect(classicsSystem).toContain("ブルデュー・バタイユなど");
     expect(classicsSystem).not.toContain("${");
     expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain(
@@ -338,6 +351,22 @@ describe("物語の王や英雄の指名", () => {
     const system = chat.chatText.mock.calls.at(-1)?.[0].system as string;
     expect(system.match(/アレクサンドロス大王など\)は、この棚でも出してよい/g)).toHaveLength(1);
     expect(system).toContain("アレクサンドロス大王などは、案内せず、この棚で出す");
+  });
+});
+
+describe("概念・用語の規則は、一般古典だけ", () => {
+  beforeEach(() => {
+    chat.chatText.mockReset();
+    chat.chatText.mockResolvedValue({ text: goodJson(), usage: {} });
+  });
+
+  it("聖書とリアリズムには、入らない(画面も、一般古典だけ「用語」を案内する)", async () => {
+    await generateCounsel("悩み", { shelf: "classics" });
+    expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain("概念や原型や思想の用語");
+    for (const shelf of ["bible", "realism"] as const) {
+      await generateCounsel("悩み", { shelf });
+      expect(chat.chatText.mock.calls.at(-1)?.[0].system).not.toContain("概念や原型や思想の用語");
+    }
   });
 });
 
