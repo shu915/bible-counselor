@@ -1,7 +1,7 @@
 // 相談1件ぶんの処理(危機の検出 → 箇所の選択・本文・解説・結論を LLM で作る)と、画面に渡す形。
 // API ルート(src/app/api/counsel/route.ts)から呼ぶ。ルートは、入力の検証と、エラーの変換だけにする。
 // ユーザーの入力は繊細なので、入力も結果も、ログにも例外にも出さない。
-import type { CounselRequest, CounselResponse, PassageView } from "./counsel-schema";
+import type { CounselRequestInput, CounselResponse, PassageView } from "./counsel-schema";
 import { LIFE_LOSS_WORDS, detectCrisis, detectHarmToOthers } from "./crisis";
 import { GenerationError, generateCounsel } from "./generate-counsel";
 
@@ -19,12 +19,12 @@ function clip(text: string, max: number): string {
 
 // 命の危険を示す入力か(「それでも続ける」を選んでいなければ)。AI を呼ばない固定の画面にする入力。
 // API の入口で、回数制限の**前**に判定する(数えず、上限でも止めない。限度に達した人にも、案内が届くように)
-export function isCrisisInput(request: CounselRequest): boolean {
+export function isCrisisInput(request: CounselRequestInput): boolean {
   return !request.continueAnyway && detectCrisis(request.consultation);
 }
 
 export async function runCounsel(
-  request: CounselRequest,
+  request: CounselRequestInput,
   signal?: AbortSignal,
 ): Promise<CounselResponse> {
   const { consultation } = request;
@@ -38,6 +38,7 @@ export async function runCounsel(
   // 他人を傷つけたい気持ちを示す語があるときは、画面は止めずに、専用の指示を足す(神が代わりに罰する、と読ませない など)
   const counsel = await generateCounsel(consultation, {
     ...(signal ? { signal } : {}),
+    shelf: request.shelf ?? "bible",
     crisisContext: keywordHit,
     harmContext: detectHarmToOthers(consultation),
   });

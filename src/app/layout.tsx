@@ -19,8 +19,9 @@ const shipporiMincho = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "聖書カウンセラー",
-  description: "悩みや弱音、懺悔を打ち明けると、聖書の言葉を引きながら答えてくれます。",
+  title: "Shu の本棚",
+  description:
+    "悩みや弱音、懺悔を打ち明けると、古典・聖書・兵法書の言葉を引きながら答えてくれます。",
   // 検索エンジンに載せない(next.config.ts のヘッダーと、二重にしてある)。広く公開するときに外す
   robots: { index: false, follow: false },
 };

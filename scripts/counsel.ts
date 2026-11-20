@@ -1,7 +1,7 @@
 // 【開発用】ターミナルで、悩み事・愚痴・弱音・懺悔などを入力すると、聖書の箇所(最大3つ)と、本文・解説・結論が返る。
 // 本番の流れ(危機の検出 → 箇所の選択・本文・解説・結論を LLM で作る)を、画面なしで通して試す。
 //
-// 使い方: npm run counsel
+// 使い方: npm run counsel [棚]  (棚: classics | bible | realism。省略は bible)
 //   悩みは、対話の入力で受ける(コマンドの引数にしないので、シェルの履歴に残らない)。空の行で終了する。
 //
 // 入力も、返答も、ファイルにも保存しない。表示するのは、自分の端末の画面だけ。
@@ -11,6 +11,7 @@ import { MAX_INPUT_CHARS } from "../src/lib/counsel-schema";
 import { detectCrisis, detectHarmToOthers } from "../src/lib/crisis";
 import { CRISIS_MESSAGE_LINES } from "../src/lib/crisis-message";
 import { generateCounsel } from "../src/lib/generate-counsel";
+import { shelfSchema } from "../src/lib/shelves";
 
 // 環境変数は、.env.local から読む。すでにある環境変数は上書きしない
 const isMissingFile = (error: unknown): boolean =>
@@ -39,8 +40,10 @@ async function consult(consultation: string): Promise<void> {
   }
 
   const startedAt = Date.now();
+  const shelf = shelfSchema.catch("bible").parse(process.argv[2]);
   // 2. 箇所の選択・本文・解説・結論(LLM)
   const counsel = await generateCounsel(consultation, {
+    shelf,
     signal: AbortSignal.timeout(DEADLINE_MS),
     harmContext: detectHarmToOthers(consultation),
   });

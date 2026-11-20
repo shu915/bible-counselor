@@ -7,6 +7,8 @@
 import { z } from "zod";
 import { MAX_INPUT_CHARS } from "./counsel-schema";
 import { chatText } from "./openrouter";
+import { CLASSICS_PROMPT, REALISM_PROMPT } from "./shelf-prompts";
+import type { ShelfId } from "./shelves";
 
 const SYSTEM_PROMPT = `あなたは、悩みを抱えた人の話を聞いて、日本語口語訳聖書(1954/1955年版)の箇所を、そっと紹介する案内役です。
 ユーザーの悩み・愚痴・弱音・懺悔などを読み、その人の気持ちの奥に合う聖書の箇所を、3つ選んでください。
@@ -208,6 +210,8 @@ export function parseCounsel(text: string): Omit<Counsel, "usage"> {
 }
 
 export interface GenerateOptions {
+  // どの棚に聞くか。省略は聖書
+  shelf?: ShelfId;
   // 入力に、命の危険を示す語があり、「それでも続ける」を選んだとき true(専用の指示を足す)
   crisisContext?: boolean;
   // 入力に、他人を傷つけたい気持ちを示す語があるとき true(専用の指示を足す。画面は止めない)
@@ -229,7 +233,11 @@ export async function generateCounsel(
   const { text, usage } = await chatText(
     {
       system:
-        SYSTEM_PROMPT +
+        (options.shelf === "classics"
+          ? CLASSICS_PROMPT
+          : options.shelf === "realism"
+            ? REALISM_PROMPT
+            : SYSTEM_PROMPT) +
         (options.crisisContext ? CRISIS_ADDENDUM : "") +
         (options.harmContext ? HARM_ADDENDUM : ""),
       user: `【悩み】\n${consultation}`,

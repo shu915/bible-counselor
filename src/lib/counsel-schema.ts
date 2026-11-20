@@ -2,6 +2,7 @@
 // **サーバー用の部品(OpenRouter・DB など)を import しない**(画面のコードに、サーバーの部品が混ざらないように)。
 // 外から来るデータ(API の入力、画面が受け取る応答)は、zod で検証してから使う。
 import { z } from "zod";
+import { shelfSchema } from "./shelves";
 
 // 入力の上限(文字)。長いと、書き換えが主題を絞れなくなるため。画面にも「500字まで」と出す
 export const MAX_INPUT_CHARS = 500;
@@ -11,8 +12,12 @@ export const counselRequestSchema = z.object({
   consultation: z.string().trim().min(1).max(MAX_INPUT_CHARS),
   // 命の危険の固定画面を見たうえで、「それでも相談を続ける」を選んだとき(誤検知で、人を締め出さない)
   continueAnyway: z.boolean().optional(),
+  // どの棚に聞くか。省略は聖書(前の版との互換)
+  shelf: shelfSchema.default("bible"),
 });
 export type CounselRequest = z.infer<typeof counselRequestSchema>;
+// 検証の前の形(shelf を省略できる)。内部の関数が受ける
+export type CounselRequestInput = z.input<typeof counselRequestSchema>;
 
 const verseViewSchema = z.object({
   // 節の表示用の番号(例: "3"、2節まとめなら "3-4")

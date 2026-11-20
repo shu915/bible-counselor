@@ -13,6 +13,7 @@ import {
   type VerseView,
 } from "@/lib/counsel-schema";
 import { CRISIS_MESSAGE } from "@/lib/crisis-message";
+import { SHELF_INFO, type ShelfId } from "@/lib/shelves";
 import { Star } from "./star";
 
 export type Done = Extract<CounselResponse, { kind: "ok" }>;
@@ -155,14 +156,21 @@ function Result({ result }: { result: Done }) {
 }
 
 // initial は、開発用の見本ページ(/dev/preview)が、API を呼ばずに各状態を出すためのもの
-export function CounselForm({ initial }: { initial?: { text: string; view: View } }) {
+export function CounselForm({
+  initial,
+  shelf = "bible",
+}: {
+  initial?: { text: string; view: View };
+  shelf?: ShelfId;
+}) {
+  const info = SHELF_INFO[shelf];
   const [text, setText] = useState(initial?.text ?? "");
   const [view, setView] = useState<View>(initial?.view ?? { status: "idle" });
   const controller = useRef<AbortController | null>(null);
   const loading = view.status === "loading";
   const loadingRef = useRef<HTMLDivElement | null>(null);
 
-  // 「聖書に聞く」を押したら、待ちの表示が見える位置までスクロールする(下に出ることに気づかない人がいるため)
+  // 送信ボタン(「聖書に聞く」など)を押したら、待ちの表示が見える位置までスクロールする(下に出ることに気づかない人がいるため)
   useEffect(() => {
     if (view.status !== "loading") return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -178,7 +186,7 @@ export function CounselForm({ initial }: { initial?: { text: string; view: View 
       const response = await fetch("/api/counsel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ consultation: text, continueAnyway }),
+        body: JSON.stringify({ consultation: text, continueAnyway, shelf }),
         signal: abort.signal,
       });
       const json: unknown = await response.json();
@@ -242,7 +250,7 @@ export function CounselForm({ initial }: { initial?: { text: string; view: View 
           disabled={loading || text.trim() === ""}
           className="mt-1.5 min-h-13.5 w-full cursor-pointer rounded-full bg-primary font-serif text-lg font-semibold tracking-[0.12em] text-on-primary enabled:hover:bg-primary-hover disabled:cursor-not-allowed disabled:bg-disabled-bg disabled:text-disabled-ink"
         >
-          聖書に聞く
+          {info.submit}
         </button>
       </form>
 
@@ -257,9 +265,7 @@ export function CounselForm({ initial }: { initial?: { text: string; view: View 
               <Star key={i} size={24} className="fill-current" />
             ))}
           </div>
-          <p className="font-serif text-base leading-[1.9] font-medium">
-            聖書の言葉を探しています(20秒ほどかかります)…
-          </p>
+          <p className="font-serif text-base leading-[1.9] font-medium">{info.loading}</p>
         </div>
       )}
       {view.status === "error" && (
@@ -295,7 +301,7 @@ export function CounselForm({ initial }: { initial?: { text: string; view: View 
             onClick={() => void submit(true)}
             className="mt-3 min-h-13 w-full cursor-pointer rounded-full border border-primary bg-transparent px-5 py-2.5 text-[15px] leading-[1.6] font-bold text-primary hover:bg-highlight"
           >
-            それでも、聖書の言葉を聞いてみる
+            {info.continueAnyway}
           </button>
         </section>
       )}
