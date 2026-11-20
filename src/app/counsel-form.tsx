@@ -14,7 +14,7 @@ import {
 } from "@/lib/counsel-schema";
 import { CRISIS_MESSAGE } from "@/lib/crisis-message";
 import { SHELF_INFO, type ShelfId } from "@/lib/shelves";
-import { Star } from "./star";
+import { ShelfMark } from "./shelf-mark";
 
 export type Done = Extract<CounselResponse, { kind: "ok" }>;
 
@@ -83,7 +83,7 @@ function Chevron() {
   );
 }
 
-function Result({ result }: { result: Done }) {
+function Result({ result, shelf }: { result: Done; shelf: ShelfId }) {
   return (
     <div className="flex flex-col gap-[clamp(44px,9vw,64px)]">
       {result.showHelp && (
@@ -108,7 +108,7 @@ function Result({ result }: { result: Done }) {
               className={`${CARD} flex flex-col gap-4.5 px-[clamp(20px,5vw,36px)] pt-[clamp(22px,5vw,34px)] pb-[clamp(14px,3vw,20px)]`}
             >
               <h2 className="flex items-center gap-2.5 text-sm leading-[1.6] font-bold tracking-[0.05em] text-gold-ink">
-                <Star size={13} className="fill-gold" />
+                <ShelfMark shelf={shelf} size={13} />
                 <span>{passage.reference}</span>
               </h2>
               <blockquote className="mb-2 flex flex-col gap-3">
@@ -141,7 +141,7 @@ function Result({ result }: { result: Done }) {
           aria-hidden="true"
           className="absolute -top-3.25 left-1/2 flex -translate-x-1/2 bg-bg px-3.5 text-gold"
         >
-          <Star size={24} className="fill-current" />
+          <ShelfMark shelf={shelf} size={24} />
         </div>
         <h2
           id="conclusion"
@@ -170,7 +170,7 @@ export function CounselForm({
   const loading = view.status === "loading";
   const loadingRef = useRef<HTMLDivElement | null>(null);
 
-  // 送信ボタン(「聖書に聞く」など)を押したら、待ちの表示が見える位置までスクロールする(下に出ることに気づかない人がいるため)
+  // 送信ボタン(「聖書を開く」など)を押したら、待ちの表示が見える位置までスクロールする(下に出ることに気づかない人がいるため)
   useEffect(() => {
     if (view.status !== "loading") return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -228,7 +228,7 @@ export function CounselForm({
         }}
       >
         <label htmlFor="consultation" className="text-[15px] leading-[1.7] font-bold">
-          悩み事・愚痴・弱音・懺悔などを、書いてください
+          {info.inputLabel}
         </label>
         <textarea
           id="consultation"
@@ -236,13 +236,14 @@ export function CounselForm({
           onChange={(event) => setText(event.target.value)}
           maxLength={MAX_INPUT_CHARS}
           rows={6}
-          className="block w-full resize-none rounded-xl border border-input bg-surface px-4 py-3.5 text-base leading-[1.85] text-ink"
+          placeholder={info.placeholder}
+          className="block w-full resize-none rounded-xl border border-input bg-surface px-4 py-3.5 text-base leading-[1.85] text-ink placeholder:text-muted"
         />
         <p className="text-sm leading-[1.75] text-muted tabular-nums">
           {text.length} / {MAX_INPUT_CHARS}字
         </p>
         <p className="text-sm leading-[1.75] text-muted">
-          送信すると、下の「ご利用にあたって」(無料であること・回数の上限・保存しないこと・送信先・免責)に、
+          送信すると、下の「ご利用にあたって」(無料であること・回数の上限・保存しないこと・送信先など)に、
           同意したものとみなします。
         </p>
         <button
@@ -262,7 +263,7 @@ export function CounselForm({
         >
           <div aria-hidden="true" className="loading-stars">
             {[0, 1, 2].map((i) => (
-              <Star key={i} size={24} className="fill-current" />
+              <ShelfMark key={i} shelf={shelf} size={24} noRing />
             ))}
           </div>
           <p className="font-serif text-base leading-[1.9] font-medium">{info.loading}</p>
@@ -305,7 +306,7 @@ export function CounselForm({
           </button>
         </section>
       )}
-      {view.status === "done" && <Result result={view.result} />}
+      {view.status === "done" && <Result result={view.result} shelf={shelf} />}
     </div>
   );
 }

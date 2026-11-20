@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Shu の本棚",
     short_name: "Shu の本棚",
     description:
-      "悩みや弱音、懺悔を打ち明けると、古典・聖書・兵法書の言葉を引きながら答えてくれます。",
+      "悩みや弱音、懺悔を打ち明けると、古典・聖書・リアリズムの言葉を引きながら答えてくれます。",
     start_url: "/",
     display: "standalone",
     background_color: "#faf7f0",

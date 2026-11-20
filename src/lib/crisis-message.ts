@@ -29,7 +29,6 @@ const SUPPORT_PLACEHOLDER_LINE: CrisisLine = {
 
 export const CRISIS_MESSAGE: readonly CrisisLine[] = [
   { text: "つらい気持ちを、抱えているのかもしれません。" },
-  { text: "ここは、聖書の言葉を紹介するだけの場所で、あなたを支える専門の相談先ではありません。" },
   // 先に、話を聞いてもらえる窓口。気持ちだけの段階の人に、119 を最初に見せない(「そこまでではない」と閉じてしまうため)
   ...(SHOW_SUPPORT_CONTACTS ? SUPPORT_CONTACT_LINES : [SUPPORT_PLACEHOLDER_LINE]),
   {
@@ -38,7 +37,7 @@ export const CRISIS_MESSAGE: readonly CrisisLine[] = [
   },
   { text: "信頼できる人に、いまの気持ちを、ひとこと伝えてみることも、ひとつの方法です。" },
   {
-    text: "もし、そうではなく、ほかのことを書いたつもりだったときは、そのまま、聖書の言葉を聞くこともできます。",
+    text: "もし、そうではなく、ほかのことを書いたつもりだったときは、そのまま、続けることもできます。",
   },
 ];
 

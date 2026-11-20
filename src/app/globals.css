@@ -60,8 +60,6 @@
   --color-header: var(--header);
   --color-header-ink: var(--header-ink);
   --color-header-muted: var(--header-muted);
-  /* ロゴの「Shu」用。Cormorant Garamond はまだ置いていない(--font-cormorant は未定義)ので、今は OS の Garamond・Times に代わる(機種で字形が変わる) */
-  --font-latin: var(--font-cormorant, "Cormorant Garamond"), Garamond, "Times New Roman", serif;
   /* 全画面を明朝にする(デザインの指示)。Shippori Mincho(layout.tsx の localFont)が先頭、なければ OS の明朝 */
   --font-sans:
     var(--font-shippori-mincho), "Hiragino Mincho ProN", "Hiragino Mincho Pro", "Yu Mincho",
@@ -176,20 +174,20 @@ summary:hover {
   height: 40px;
   color: var(--gold);
 
-  & svg {
+  & > * {
     animation: twinkle 2.4s ease-in-out infinite both;
   }
 
-  & svg:nth-child(2) {
+  & > *:nth-child(2) {
     animation-delay: 0.4s;
   }
 
-  & svg:nth-child(3) {
+  & > *:nth-child(3) {
     animation-delay: 0.8s;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    & svg {
+    & > * {
       animation: none;
       opacity: 1;
       transform: none;
@@ -207,5 +205,152 @@ summary:hover {
   30% {
     opacity: 1;
     transform: scale(1.12);
+  }
+}
+
+/* ===== 棚ごとの色 =====
+   聖書は、:root の色のまま(上書きしない)。一般古典とリアリズムは、差し色とボタンの色だけを上書きする。
+   地・カード・文字・線の色は、3つの棚で共通(切り替えても、画面全体の明暗が変わらない)。
+   既存のクラス(text-gold-ink・bg-gold・bg-primary など)は、このまま棚の色になる */
+:root {
+  --motif: transparent; /* 見出しの枠の中の模様 */
+}
+
+[data-shelf="classics"] {
+  --gold: light-dark(#8c2f39, #b8616b); /* 臙脂 */
+  --gold-ink: light-dark(#8c2f39, #d88a92);
+  --primary: light-dark(#1f3a5f, #c98a91);
+  --primary-hover: light-dark(#172d4a, #d8a1a7);
+  --on-primary: light-dark(#ffffff, #12161f);
+  --mark: light-dark(#f3dfe1, rgba(196, 106, 115, 0.24));
+  --glow: light-dark(rgba(140, 47, 57, 0.08), rgba(196, 106, 115, 0.1));
+  --motif: light-dark(rgba(140, 47, 57, 0.17), rgba(216, 138, 146, 0.16));
+}
+
+[data-shelf="realism"] {
+  --gold: light-dark(#a3341f, #d0634d); /* 朱 */
+  --gold-ink: light-dark(#a3341f, #ea8a76);
+  --primary: light-dark(#23272d, #d6d9dd); /* 墨 / 明るい鋼色 */
+  --primary-hover: light-dark(#16191d, #eceef0);
+  --on-primary: light-dark(#ffffff, #12161f);
+  --mark: light-dark(#ecdcd5, rgba(224, 112, 90, 0.22));
+  --glow: light-dark(rgba(35, 39, 45, 0.05), rgba(255, 255, 255, 0.04));
+  --motif: light-dark(rgba(28, 36, 51, 0.16), rgba(236, 232, 222, 0.13));
+}
+
+/* ===== 見出しの枠の中の模様(shelf-frame.tsx) ===== */
+@utility shelf-motif {
+  position: absolute;
+  inset: 12px 12px 0;
+  overflow: hidden;
+  /* 中央(見出しの文字の周り)を抜き、下に向かって消す */
+  mask-image:
+    radial-gradient(ellipse 46% 40% at 50% 56%, transparent 55%, #000 100%),
+    linear-gradient(#000 40%, transparent 92%);
+  mask-composite: intersect;
+  /* 棚を切り替えたとき、模様だけが、ふわっと現れる */
+  animation: motif-in 0.45s ease-out both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility motif-classics {
+  display: flex;
+  justify-content: space-around;
+  padding-inline: 4%;
+}
+
+@utility motif-col {
+  writing-mode: vertical-rl;
+  font-size: 15px;
+  letter-spacing: 0.3em;
+  color: var(--motif);
+  animation-name: motif-flow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+
+  & p {
+    margin: 0 0 6em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility motif-grid {
+  position: absolute;
+  inset: -2px;
+  background:
+    repeating-linear-gradient(0deg, var(--motif) 0 1px, transparent 1px calc(100% / 18)),
+    repeating-linear-gradient(90deg, var(--motif) 0 1px, transparent 1px calc(100% / 18));
+}
+
+@utility motif-stone {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  animation: motif-place 16s ease-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    opacity: 0.85;
+  }
+}
+
+@utility motif-stone-black {
+  background: radial-gradient(circle at 35% 30%, #59606a, #121417 70%);
+}
+
+@utility motif-stone-white {
+  background: radial-gradient(circle at 35% 30%, #ffffff, #d5d6d2 75%);
+  box-shadow: 0 0 0 1px rgba(28, 36, 51, 0.18);
+}
+
+/* リアリズムの印(碁石)。輪は、見出しなどの印だけ(待ちの表示では、付けない) */
+@utility stone-mark {
+  background: radial-gradient(circle at 35% 30%, #6a717b, #121417 72%);
+}
+
+/* 外側の朱の輪は、地の色で一度切ってから描く */
+@utility stone-ring {
+  box-shadow:
+    0 0 0 3px var(--bg),
+    0 0 0 4px var(--gold);
+}
+
+@keyframes motif-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes motif-flow {
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes motif-place {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+  5%,
+  85% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  95%,
+  100% {
+    opacity: 0;
   }
 }

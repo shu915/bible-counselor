@@ -238,6 +238,32 @@ describe("generateCounsel", () => {
   });
 });
 
+describe("人物や書物の指名", () => {
+  beforeEach(() => {
+    chat.chatText.mockReset();
+    chat.chatText.mockResolvedValue({ text: goodJson(), usage: {} });
+  });
+
+  it("3つの棚とも、指名を優先する規則と、安全の規則が優先される旨が入る", async () => {
+    for (const shelf of ["classics", "bible", "realism"] as const) {
+      await generateCounsel("孔子ならなんと言う?", { shelf });
+      const system = chat.chatText.mock.calls.at(-1)?.[0].system as string;
+      expect(system).toContain("指名を、箇所の選び方より優先する");
+      expect(system).toContain("その人になりきって話さない");
+      expect(system).toContain("安全の規則");
+    }
+  });
+
+  it("棚の範囲の外の指名は、別の棚を案内する(棚ごとに文が違う)", async () => {
+    await generateCounsel("悩み", { shelf: "classics" });
+    expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain("「聖書の棚」");
+    await generateCounsel("悩み", { shelf: "bible" });
+    expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain("聖書の中の人物");
+    await generateCounsel("悩み", { shelf: "realism" });
+    expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain("論語・老子・聖書など");
+  });
+});
+
 describe("命の危険の文脈(crisisContext)", () => {
   beforeEach(() => {
     chat.chatText.mockReset();

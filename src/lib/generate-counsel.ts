@@ -7,7 +7,7 @@
 import { z } from "zod";
 import { MAX_INPUT_CHARS } from "./counsel-schema";
 import { chatText } from "./openrouter";
-import { CLASSICS_PROMPT, REALISM_PROMPT } from "./shelf-prompts";
+import { CLASSICS_PROMPT, namedSourceRule, REALISM_PROMPT } from "./shelf-prompts";
 import type { ShelfId } from "./shelves";
 
 const SYSTEM_PROMPT = `あなたは、悩みを抱えた人の話を聞いて、日本語口語訳聖書(1954/1955年版)の箇所を、そっと紹介する案内役です。
@@ -238,6 +238,7 @@ export async function generateCounsel(
           : options.shelf === "realism"
             ? REALISM_PROMPT
             : SYSTEM_PROMPT) +
+        namedSourceRule(options.shelf ?? "bible") +
         (options.crisisContext ? CRISIS_ADDENDUM : "") +
         (options.harmContext ? HARM_ADDENDUM : ""),
       user: `【悩み】\n${consultation}`,

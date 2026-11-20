@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { SiteHeader } from "./site-header";
 
 // 全画面の書体は、Shippori Mincho(SIL OFL。src/app/fonts/OFL.txt)。自分で持つ:
 // next/font/google の日本語フォントは、next dev(Turbopack)が「Module not found: @vercel/turbopack-next/internal/font/google/font」で落ちる(build は通る)ため。
@@ -21,7 +22,7 @@ const shipporiMincho = localFont({
 export const metadata: Metadata = {
   title: "Shu の本棚",
   description:
-    "悩みや弱音、懺悔を打ち明けると、古典・聖書・兵法書の言葉を引きながら答えてくれます。",
+    "悩みや弱音、懺悔を打ち明けると、古典・聖書・リアリズムの言葉を引きながら答えてくれます。",
   // 検索エンジンに載せない(next.config.ts のヘッダーと、二重にしてある)。広く公開するときに外す
   robots: { index: false, follow: false },
 };
@@ -45,7 +46,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <SiteHeader />
+        {children}
+      </body>
     </html>
   );
 }
