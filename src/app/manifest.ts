@@ -3,9 +3,10 @@ import type { MetadataRoute } from "next";
 // スマホのホーム画面に追加したときの名前・色・アイコン
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "聖書カウンセラー",
-    short_name: "聖書カウンセラー",
-    description: "悩みや弱音、懺悔を打ち明けると、聖書の言葉を引きながら答えてくれます。",
+    name: "Shu の本棚",
+    short_name: "Shu の本棚",
+    description:
+      "悩みや弱音、懺悔を打ち明けると、古典・聖書・兵法書の言葉を引きながら答えてくれます。",
     start_url: "/",
     display: "standalone",
     background_color: "#faf7f0",

@@ -15,6 +15,14 @@
 - 回数制限: Upstash Redis の `INCR`/`DECR`(src/lib/rate-limit.ts、counter-store.ts)。IP ごと・全体の 1 日の枠。AI に届かなかった失敗は戻す
 - テスト 231 件が通る。`npm run check`・`npm run build` が通る
 
+## 作業の状況(2026-11-19 の終わり)
+
+- PR #1(掃除・待ち時間とログ・危機の画面の窓口)は、マージ済み。リポジトリは `shu-bookshelf` にリネーム済み(ローカルのフォルダ名は、そのまま)
+- ブランチ `bookshelf-three-shelves` に、**未コミット**で、3つの棚の骨組みがある: `/`(一般古典)・`/bible`・`/realism`。`src/lib/shelves.ts`(棚の定義)・`src/lib/shelf-prompts.ts`(一般古典とリアリズムのプロンプト)・`src/app/shelf-page.tsx`。`npm run counsel [classics|bible|realism]` で棚を指定して試せる
+- リアリズムの方針: 励まさず・責めず(自己責任論にしない)・欺かず、勝ち目を上げる手を示す。対象は、孫子・韓非子・君主論・戦争論・グラシアン・ラ・ロシュフコー・ショーペンハウアー・菜根譚など
+- デザインは、ユーザーが、あとで作る(聖書用のままで、棚ごとの見た目は、まだ)
+- 残り: CLAUDE.md の目的・`package.json` の name・docs の「Bible Counselor」の書き換え、docs/ui.md に棚の構成を足す、棚ごとのテスト、サブドメイン `shelf` のデプロイ、公開前の宿題(全体枠・ヘッダー・窓口の最終確認)
+
 ## 決めたこと(2026-11-19。次のセッションで実行)
 
 - 構成: トップ(`/`)を「Shu の本棚」(あらゆる古典)にして、聖書は `/bible`(「聖書に聞く」のリンク)に移す。聖書と古典は、別のページ
