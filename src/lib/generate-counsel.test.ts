@@ -272,6 +272,9 @@ describe("人物や書物の指名", () => {
     const year = new Date().getFullYear() - 71;
     expect(classicsSystem).toContain("著作権が切れている人(" + year + "年以前に亡くなった人");
     expect(classicsSystem).toContain("夏目漱石");
+    // 経済学者・社会思想家(マルクス・スミス・ウェーバーなど)の受け皿は、この棚
+    expect(classicsSystem).toContain("マルクス・アダム・スミス・ウェーバー");
+    expect(classicsSystem).toContain("経済学者・社会学者・歴史家・哲学者も、この棚で扱う");
     expect(classicsSystem).toContain("ブルデュー・バタイユなど");
     expect(classicsSystem).not.toContain("${");
     expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain(
@@ -283,6 +286,9 @@ describe("人物や書物の指名", () => {
     const realismSystem = chat.chatText.mock.calls.at(-1)?.[0].system as string;
     expect(realismSystem).toContain("論語・老子・聖書・神話・伝承の書など");
     expect(realismSystem).toContain("機械的に頭に付けない");
+    // 経済学・社会科学の古典(マルクス・ケインズなど)も、この棚の対象で、範囲の外ではない
+    expect(realismSystem).toContain("経済学・政治経済・社会科学の古典も");
+    expect(realismSystem).toContain("スミス・マルクス・ウェーバー");
     // 一覧にない人物(ナポレオンなど)も、同じ系統なら、この棚の範囲の中
     expect(realismSystem).toContain("一覧にない人物や書物でも、この系統なら、範囲の中");
     expect(realismSystem).toContain("ナポレオン");

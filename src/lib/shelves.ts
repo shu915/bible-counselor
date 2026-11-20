@@ -71,6 +71,6 @@ export const SHELF_INFO: Record<ShelfId, ShelfInfo> = {
     submit: "打てる手を探す",
     loading: "打てる手を探しています(20秒ほどかかります)…",
     continueAnyway: "それでも、打てる手を探してみる",
-    books: "兵法・政治思想・処世術の古典",
+    books: "兵法・政治・経済・処世術の古典",
   },
 };
