@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   title: "Shu の本棚",
   description:
     "悩みや弱音、懺悔を打ち明けると、古典・聖書・リアリズムの言葉を引きながら答えてくれます。",
-  // 検索エンジンに載せない(next.config.ts のヘッダーと、二重にしてある)。広く公開するときに外す
+  // 検索エンジンに載せない(next.config.ts のヘッダーと、二重にしてある)。広く公開する予定はないので、外さない
   robots: { index: false, follow: false },
 };
 
