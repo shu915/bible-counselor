@@ -250,6 +250,13 @@ describe("人物や書物の指名", () => {
       const system = chat.chatText.mock.calls.at(-1)?.[0].system as string;
       expect(system).toContain("指名を、箇所の選び方より優先する");
       expect(system).toContain("その人になりきって話さない");
+      // 物語の書から選んでよいのは、リアリズム以外(リアリズムは記録だけ。下の「物語の王や英雄の指名」)
+      if (shelf === "realism") {
+        expect(system).not.toContain("その人物を描いた古典");
+      } else {
+        expect(system).toContain("その人物を描いた古典");
+      }
+      expect(system).toContain("現代の創作の台詞は、引かない");
       expect(system).toContain("安全の規則");
     }
   });
@@ -257,10 +264,70 @@ describe("人物や書物の指名", () => {
   it("棚の範囲の外の指名は、別の棚を案内する(棚ごとに文が違う)", async () => {
     await generateCounsel("悩み", { shelf: "classics" });
     expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain("「聖書の棚」");
+    const classicsSystem = chat.chatText.mock.calls.at(-1)?.[0].system as string;
+    // 著作権が切れている人(没後70年)なら、出す。年は、今年から数える(1年ごとに進む)
+    const year = new Date().getFullYear() - 71;
+    expect(classicsSystem).toContain("著作権が切れている人(" + year + "年以前に亡くなった人");
+    expect(classicsSystem).toContain("夏目漱石");
+    expect(classicsSystem).toContain("ブルデュー・バタイユ・ボストロム");
+    expect(classicsSystem).not.toContain("${");
+    expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain(
+      "黙って、いつもの書物に切り替えない",
+    );
     await generateCounsel("悩み", { shelf: "bible" });
     expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain("聖書の中の人物");
     await generateCounsel("悩み", { shelf: "realism" });
-    expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain("論語・老子・聖書など");
+    const realismSystem = chat.chatText.mock.calls.at(-1)?.[0].system as string;
+    expect(realismSystem).toContain("論語・老子・聖書・神話・伝承の書など");
+    expect(realismSystem).toContain("機械的に頭に付けない");
+    // 一覧にない人物(ナポレオンなど)も、同じ系統なら、この棚の範囲の中
+    expect(realismSystem).toContain("一覧にない人物や書物でも、この系統なら、範囲の中");
+    expect(realismSystem).toContain("ナポレオン");
+    expect(realismSystem).toContain("チャーチルなど");
+    expect(realismSystem).not.toContain("${");
+    // 一般古典は、そういう人物が指名されたら、リアリズムの棚を案内する
+    await generateCounsel("悩み", { shelf: "classics" });
+    expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain(
+      "軍人・政治家・戦略家(ナポレオン・ビスマルクなど)が指名されたら",
+    );
+  });
+});
+
+describe("神話の書の棚", () => {
+  beforeEach(() => {
+    chat.chatText.mockReset();
+    chat.chatText.mockResolvedValue({ text: goodJson(), usage: {} });
+  });
+
+  it("神話・伝承の書は、一般古典の対象で、リアリズムでは範囲外として案内される", async () => {
+    await generateCounsel("悩み", { shelf: "classics" });
+    expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain("神話・伝承の書(古エッダ");
+    await generateCounsel("悩み", { shelf: "realism" });
+    expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain("聖書・神話・伝承の書など");
+  });
+});
+
+describe("物語の王や英雄の指名", () => {
+  beforeEach(() => {
+    chat.chatText.mockReset();
+    chat.chatText.mockResolvedValue({ text: goodJson(), usage: {} });
+  });
+
+  it("リアリズムは、記録(史書・伝記)だけ。物語の書は、範囲外で、アーサー王を許可する例は入らない", async () => {
+    await generateCounsel("悩み", { shelf: "realism" });
+    const system = chat.chatText.mock.calls.at(-1)?.[0].system as string;
+    expect(system).toContain("実在が伝わる王や英雄");
+    expect(system).toContain("実在の人物でも、この棚の範囲の外");
+    expect(system).not.toContain("マロリー");
+  });
+
+  it("一般古典は、叙事詩・騎士物語から選んでよい", async () => {
+    await generateCounsel("悩み", { shelf: "classics" });
+    expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain("マロリー");
+    // 「軍人の言行は選ばない」と食い違わない(アレクサンドロスは、この棚でも出す。たらい回しにしない)
+    const system = chat.chatText.mock.calls.at(-1)?.[0].system as string;
+    expect(system.match(/アレクサンドロス大王など\)は、この棚でも出してよい/g)).toHaveLength(1);
+    expect(system).toContain("アレクサンドロス大王などは、案内せず、この棚で出す");
   });
 });
 

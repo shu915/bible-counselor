@@ -17,6 +17,8 @@ export interface ShelfInfo {
   // 入力欄の見出しと、例(placeholder)
   inputLabel: string;
   placeholder: string;
+  // 「聞き方の例」(人物や書物の指名。注意書きに出す)
+  askExamples: string;
   // 送信ボタン・待ちの表示・「それでも続ける」ボタンの文言
   submit: string;
   loading: string;
@@ -34,6 +36,7 @@ export const SHELF_INFO: Record<ShelfId, ShelfInfo> = {
     lead: ["悩みでも、考えごとでも。", "古今東西の古典から、いまの気持ちに合う言葉を探します。"],
     inputLabel: "いま心にあることを、そのまま書いてください",
     placeholder: "思いつくままに、書いてください",
+    askExamples: "「孔子なら、なんと言う?」「『徒然草』には、なんて書いてある?」",
     submit: "古典を開く",
     loading: "古典の言葉を探しています(20秒ほどかかります)…",
     continueAnyway: "それでも、古典を開いてみる",
@@ -47,6 +50,7 @@ export const SHELF_INFO: Record<ShelfId, ShelfInfo> = {
     lead: ["悩みも、弱音も、懺悔も。", "何千年も読まれてきた言葉が、そっと寄り添います。"],
     inputLabel: "悩み事・愚痴・弱音・懺悔など、心にあることを、書いてください",
     placeholder: "思いつくままに、書いてください",
+    askExamples: "「パウロなら、なんと言う?」「詩篇には、なんて書いてある?」",
     submit: "聖書を開く",
     loading: "聖書の言葉を探しています(20秒ほどかかります)…",
     continueAnyway: "それでも、聖書を開いてみる",
@@ -63,6 +67,7 @@ export const SHELF_INFO: Record<ShelfId, ShelfInfo> = {
     ],
     inputLabel: "いまの状況と、困っていることを、書いてください",
     placeholder: "状況と、相手との関係から、思いつくままに",
+    askExamples: "「孫子なら、なんと言う?」「『君主論』には、なんて書いてある?」",
     submit: "打てる手を探す",
     loading: "打てる手を探しています(20秒ほどかかります)…",
     continueAnyway: "それでも、打てる手を探してみる",

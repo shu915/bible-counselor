@@ -185,7 +185,8 @@ describe("POST /api/counsel(回数制限)", () => {
     const unreached = [
       new OpenRouterError("x", undefined, "network"),
       new OpenRouterError("x", 503, "http"),
-      new OpenRouterError("x", 403, "http"),
+      new OpenRouterError("x", 429, "http"),
+      new OpenRouterError("x", 402, "http"),
       new OpenRouterError("x", undefined, "config"),
     ];
     for (const error of unreached) {
@@ -196,11 +197,22 @@ describe("POST /api/counsel(回数制限)", () => {
     }
   });
 
+  it("403(入力の審査で返ることがある)は、枠を戻さない(数える)。画面には「今月の利用は終了」と出る", async () => {
+    release.mockClear();
+    mocks.runCounsel.mockRejectedValueOnce(new OpenRouterError("x", 403, "http"));
+    const response = await POST(post(okBody("疲れた")));
+    expect(response.status).toBe(503);
+    expect(release).not.toHaveBeenCalled();
+  });
+
   it("AI が答えたあとの失敗・1回の待ち時間と全体の締め切りの超過・そのほかの失敗は、枠を戻さない(数える)", async () => {
     const reached = [
       new OpenRouterError("x", undefined, "response"),
       new OpenRouterError("x", undefined, "deadline"),
       new OpenRouterError("x", undefined, "timeout"),
+      // 生成が進んだあとで返ることがある(課金されうる)ので、数える
+      new OpenRouterError("x", 502, "http"),
+      new OpenRouterError("x", 504, "http"),
       new Error("解説の検証に失敗"),
     ];
     for (const error of reached) {
