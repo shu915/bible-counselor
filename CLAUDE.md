@@ -87,6 +87,7 @@
 | [docs/cost.md](docs/cost.md) | 費用の試算 |
 | [docs/safety.md](docs/safety.md) | 命の危険への対応・出さない聖句・生成の規則 |
 | [docs/ui.md](docs/ui.md) | 画面の構成と状態(Claude Design に依頼するときの材料) |
+| [docs/deploy.md](docs/deploy.md) | デプロイの手順と、デプロイ後の確認 |
 | [docs/harness.md](docs/harness.md) | テスト・CI・依存・リポジトリ運用・hooks の詳細 |
 
 ## このファイルの保ち方

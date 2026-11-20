@@ -42,5 +42,5 @@ yarn-error.log*
 next-env.d.ts
 
 # 聖書のデータ(出典の XML と、そこから生成した JSON)。再配布してよいか分からないので、リポジトリには入れない。
-# data/ の中は、すべて除外する(npm run bible:fetch で取得し、npm run bible:convert で作る)
+# data/ の中は、すべて除外する
 /data/

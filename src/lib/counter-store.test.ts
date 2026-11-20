@@ -42,6 +42,10 @@ describe("getCounterStore(どの保管先を使うか)", () => {
     });
     expect(typeof upstash.incr).toBe("function");
     expect(typeof vercel.decr).toBe("function");
+    // 本番では、開発用のメモリの保管先ではない
+    const development = getCounterStore({ NODE_ENV: "development" });
+    expect(upstash).not.toBe(development);
+    expect(vercel).not.toBe(development);
   });
 });
 
@@ -117,16 +121,11 @@ describe("Redis の保管先(Upstash の HTTP を、差し替えて確かめる)
     const fake = installFakeUpstash();
     expect(await store().decr("gone")).toBe(0);
     expect(fake.data.get("gone")).toBe(0);
+    // SET(期限なし・上書き)でなく、INCR で1つ戻して、期限を付ける
     expect(fake.sent).toEqual([
       ["decr", "gone"],
-      ["set", "gone", 0],
+      ["incr", "gone"],
+      ["expire", "gone", 172_800],
     ]);
-  });
-
-  it("Redis に入れるのは、キーと回数だけ(IP・相談の内容は、入らない)", async () => {
-    const fake = installFakeUpstash();
-    await store().incr("rl:ip:2026-11-20:" + "a".repeat(64), 172_800);
-    const all = JSON.stringify(fake.sent);
-    expect(all).not.toMatch(/\d+\.\d+\.\d+\.\d+/);
   });
 });

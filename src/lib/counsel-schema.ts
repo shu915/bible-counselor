@@ -65,7 +65,7 @@ export const counselErrorSchema = z.object({
   error: z.enum(["invalid", "rate_limit", "busy", "limit", "failed"]),
 });
 
-// API のエラーの種類ごとに、画面に出す文(画面と、開発用の見本ページで共通。"use client" のファイルから、サーバー側が値を import しないよう、ここに置く)
+// API のエラーの種類ごとに、画面に出す文(画面で使う。"use client" のファイルから、サーバー側が値を import しないよう、ここに置く)
 export const ERROR_MESSAGES = {
   invalid: "入力を確認してください(1〜500字)。",
   rate_limit: "今日の回数の上限に達しました。明日、また、お試しください。",

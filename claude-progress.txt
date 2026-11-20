@@ -1,68 +1,48 @@
-# 進捗(Bible Counselor)
+# 進捗(Shu の本棚 / リポジトリ shu-bookshelf)
 
-最終更新: 2026-11-19(夜)
+最終更新: 2026-11-20
 
 ## 経緯(詳しくは CLAUDE.md)
 
-- Bible_RAG_Counselor(タグ `rag-final`)から、必要な分を `git archive` でコピーして作った。RAG は外し、LLM だけ。DB はなし(回数制限の記録だけ Upstash Redis)
-- 履歴は引き継いでいない(参照元の main の履歴に、口語訳の XML が残っているため)
+- Bible_RAG_Counselor(タグ `rag-final`)から、RAG を外して、LLM だけにした。DB はなし(回数制限の記録だけ Upstash Redis)
+- 「Shu の本棚」にして、3つの棚: 一般古典(`/`)・聖書(`/bible`)・リアリズム(`/realism`)。処理は同じで、違うのはプロンプトと、見た目・文言
 
-## できていること(コミット前。まだ git の履歴はない)
+## できていること
 
-- 画面一式(Claude Design の見本を反映。昼夜の切り替え・アイコン・noindex・フォント)
-- 安全(命の危険のキーワード検出・固定画面・命が失われる節のコード検査・電話番号の除去)
-- 生成: LLM が、箇所の選択・本文(口語訳)・解説・結論を、1回の呼び出しで作る(src/lib/generate-counsel.ts)
-- 回数制限: Upstash Redis の `INCR`/`DECR`(src/lib/rate-limit.ts、counter-store.ts)。IP ごと・全体の 1 日の枠。AI に届かなかった失敗は戻す
-- テスト 231 件が通る。`npm run check`・`npm run build` が通る
+- 3つの棚の画面(見た目・ヘッダー・文言・待ちの印)、危機の画面(窓口は、よりそいホットラインとあなたのいばしょ。公開の直前に、受付中かを見直す)
+- 生成: 1回の呼び出しで、箇所・本文・解説・結論。人物・書物の指名を優先(docs/safety.md の 5)。存命の人物は引かない。著作権が切れた人だけ引く
+- 回数制限: Upstash Redis(INCR/DECR)。IP ごと 5回・全体 100回/日。枠を戻すのは、402・429・503・設定の誤り・接続できない、だけ
+- セキュリティヘッダー(nosniff・X-Frame-Options・frame-ancestors・Referrer-Policy・Permissions-Policy)
+- 費用の実測: 1回 約 $0.02〜0.03(docs/cost.md)
+- テスト 241 件、`npm run check`・`npm run build` が通る
 
-## 作業の状況(2026-11-19 の終わり)
+## 作業の状況
 
-- PR #1(掃除・待ち時間とログ・危機の画面の窓口)は、マージ済み。リポジトリは `shu-bookshelf` にリネーム済み(ローカルのフォルダ名は、そのまま)
-- ブランチ `bookshelf-three-shelves` に、**未コミット**で、3つの棚の骨組みがある: `/`(一般古典)・`/bible`・`/realism`。`src/lib/shelves.ts`(棚の定義)・`src/lib/shelf-prompts.ts`(一般古典とリアリズムのプロンプト)・`src/app/shelf-page.tsx`。`npm run counsel [classics|bible|realism]` で棚を指定して試せる
-- リアリズムの方針: 励まさず・責めず(自己責任論にしない)・欺かず、勝ち目を上げる手を示す。対象は、孫子・韓非子・君主論・戦争論・グラシアン・ラ・ロシュフコー・ショーペンハウアー・菜根譚など
-- デザインは、ユーザーが、あとで作る(聖書用のままで、棚ごとの見た目は、まだ)
-- 残り: CLAUDE.md の目的・`package.json` の name・docs の「Bible Counselor」の書き換え、docs/ui.md に棚の構成を足す、棚ごとのテスト、サブドメイン `shelf` のデプロイ、公開前の宿題(全体枠・ヘッダー・窓口の最終確認)
+- PR #1〜#5 は、マージ済み。ブランチ `pre-release-cleanup` に、**未コミット**の変更がある(ロックの名前・口語訳の緩和・存命の人物の規則・プレビューの削除・`inQuote` の掃除・Redis のテスト・レビューの直し・費用の計測・docs/deploy.md)
+- 次: コミット → PR → マージ → デプロイ(docs/deploy.md の手順)
 
-## 決めたこと(2026-11-19。次のセッションで実行)
+## デプロイ(人がやること)
 
-- 構成: トップ(`/`)を「Shu の本棚」(あらゆる古典)にして、聖書は `/bible`(「聖書に聞く」のリンク)に移す。聖書と古典は、別のページ
-- サブドメインは `shelf`(`shelf.<メインのドメイン>`)。Vercel に追加して、Xserver の DNS に CNAME を 1 本足す。メインのドメインは、Xserver の WordPress(ヘッドレスのバックエンド)
-- リポジトリ名は `shu-shelf` にリネームする(GitHub。ユーザーが「リネームして」と言ってから)。ローカルのフォルダ名は、メモリが切れるので、変えない
-- 危機の画面: 窓口はよりそいホットライン(0120-279-338)とあなたのいばしょ(https://talkme.jp/)。生きづらびっと・#いのちSOS は休止中なので載せない。公開の直前に、公式のページで受付中かを見直す
-- 119 は、「すでに行動した・いまにも実行しそう」のときだけ。話を聞いてもらう窓口を先に出す
-- コミットは、ユーザーが「コミットして」と言うまでしない。作業ブランチ `cleanup-rag-leftovers` に、未コミットの変更がある(掃除・待ち時間 50 秒とログ・窓口の表示・危機の画面の順番)。先に、これを PR にする
+1. Upstash(本家)で Redis を作る。OpenRouter で本番用のキーを作る(月の上限つき)
+2. Vercel のプロジェクトを作り、環境変数を Production と Preview の両方に入れる(`OPENROUTER_API_KEY`・`RATE_LIMIT_SALT`・`UPSTASH_REDIS_REST_URL`・`UPSTASH_REDIS_REST_TOKEN`)
+3. 仮のアドレスで確認 → `shelf.` の CNAME を Xserver に足す(プロキシなし)→ もう一度確認
+4. 広く公開するときに、noindex を外す(`next.config.ts` と `layout.tsx`)
 
-## まだ(次にやる)
+## 決めたこと
 
-1. (済み)ロックファイルを置いた(`@rolldown/binding-*` が入っている)。`npm ci`・`npm run check`・テスト 231 件・ビルドが通る
-2. **実際の AI での確認**: `.env.local` に `OPENROUTER_API_KEY` を書いて、`npm run counsel` で、いくつかの入力(軽い悩み・体調・怒り・現代の話題)を試す。箇所が気持ちに合うか、解説がこじつけでないかを、目で見る(口語訳との一字一句の一致は重視しない)
-3. 最初のコミットと、GitHub のリポジトリ作成。main の保護(Ruleset `protect-main`)、CI の `check` を必須にする
-4. `evaluator`(規則では、挙動を変えたら呼ぶ)
-5. 公開の前: 窓口の名前と番号(人が公式の情報で確認)、Upstash の追加(Vercel の Marketplace)、Vercel の環境変数(`RATE_LIMIT_SALT`・本番用の API キー・Redis)、デプロイ後の確認(`VERCEL` があるか、2つの回線で、別々の IP の枠になるか)、noindex を外すタイミング、注意書きの文面の確認、口語訳の本文を画面に出すことの可否
-
-## 取り残し(動くが、不要なもの)
-
-- (済み)`embedTexts`・`EMBEDDING_MODEL`・そのテスト・前の RAG の名残のコメントは、消した
-- `data/`(取得した聖書の XML と、生成した JSON)。このリポジトリでは使わない。`.gitignore` で除外してあるので、手で消してよい
-- Docker のボリューム `bible_counselor_db_data`。使わない。`docker volume rm` で消してよい
+- コミットは、ユーザーが「コミットして」と言うまでしない。別窓でレビューした変更には、evaluator を呼ばない
+- 専門家には見せない。免責は、最小限に軽くする
+- 存命の人物は、どの棚でも引かない(別の棚へも案内しない)
+- 聖書の本文は、口語訳の一字一句を求めない(現代の日本語でよい)
+- 全体の 1 日の上限は 100 回のまま(月の上限は、デプロイのときに決める)
 
 ## 将来の課題
 
-- 本文の正確さ: 存在しない節・意味が違う本文が出ていないかを、ときどき見る(一字一句の一致は、重視しない)。必要なら、検証の仕組みを足す
-- 質の改善の候補(参照元の観察): 視点を広げる箇所の追加、合わないときに少なく返す(今は、プロンプトで頼んでいる)
-
-## 次のセッションの最初に
-
-1. このファイルと CLAUDE.md を読む(CLAUDE.md の「経緯」に、なぜ RAG を外したかがある)
-2. `.env.local` に `OPENROUTER_API_KEY` があるか、ユーザーに確かめる(環境変数のファイルは、私は読めない)
-3. 「まだ(次にやる)」の 2 から始める: `npm run counsel` で、いくつかの入力を試し、**選ばれた箇所が気持ちに合うか、解説がこじつけでないか**を見る。口語訳との一字一句の一致は、重視しない(存在しない節・意味違いだけ報告)
-4. 最初のコミットの前に、`git status` と `git ls-files` で、`data/`・環境変数のファイル・生成物が入っていないかを、ユーザーに見せる
+- 質の改善: 本文の正確さを、ときどき見る。指名の規則(なりきらない・出典の確かさ)は、プロンプトの頼みで、コードでは守れない
+- 棚ごとのテストの充実、CI の action を SHA で固定、CSP の `script-src`(XSS が起きる箇所が増えたとき)
 
 ## つまずいたことのメモ(技術)
 
-- `next/font/google` の日本語フォントは、`next dev`(Turbopack)で、「Module not found: @vercel/turbopack-next/internal/font/google/font」で落ちる(build は通る)。→ 削った woff2 を `src/app/fonts/` に置いて、`next/font/local`(済み)
-- macOS の npm は、ロックから `@rolldown/binding-*` を落とす。→ 空のフォルダで `npm install --package-lock-only` して、人がロックを置く(ガードの対象)
-- Tailwind の `light-dark()` は、ビルド時に、古いブラウザでも動く形に変換される(`@supports` の保険は、要らない)
-- ガードは、`rm -r`、ボリュームを消す docker のコマンド、ロックや聖書のデータの書き込み、環境変数のファイルを含むコマンドを止める。迂回せず、人にお願いする。コマンドの中の文字列にも反応するので、メモの文面にも、気をつける
-- zsh は、変数を単語に分けない(配列で渡す)。`&&` でつなぐと、ガードが誤検知することがある
-- 検索エンジンに載せない設定(noindex)が入っている。広く公開するときに、`next.config.ts` と `layout.tsx` の両方から外す
+- macOS の npm は、ロックから `@rolldown/binding-*` を落とすことがある(docs/harness.md)
+- ガードは、`rm -r`・`git push --delete`・`.env*` を含むコマンドなどを止める。迂回せず、人にお願いする。`&&` でつなぐと誤検知することがある
+- ブランチの削除(リモート)は、人の手作業
