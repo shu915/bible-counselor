@@ -1,11 +1,11 @@
-// 【開発用】ターミナルで、悩み事・愚痴・弱音・懺悔などを入力すると、聖書の箇所(最大3つ)と、本文・解説・結論が返る。
+// 【開発用】ターミナルで、悩み事・愚痴・弱音・懺悔などを入力すると、古典の箇所(最大3つ)と、本文・解説・結論が返る。
 // 本番の流れ(危機の検出 → 箇所の選択・本文・解説・結論を LLM で作る)を、画面なしで通して試す。
 //
-// 使い方: npm run counsel [棚]  (棚: classics | bible | realism。省略は bible)
+// 使い方: npm run counsel [棚]  (棚: classics | bible | realism。省略は classics)
 //   悩みは、対話の入力で受ける(コマンドの引数にしないので、シェルの履歴に残らない)。空の行で終了する。
 //
 // 入力も、返答も、ファイルにも保存しない。表示するのは、自分の端末の画面だけ。
-// OpenRouter を呼ぶ(1回 約 $0.05)。OPENROUTER_API_KEY は、.env.local に書く。
+// OpenRouter を呼ぶ(1回 約 $0.02〜0.03)。OPENROUTER_API_KEY は、.env.local に書く。
 import * as readline from "node:readline/promises";
 import { MAX_INPUT_CHARS } from "../src/lib/counsel-schema";
 import { detectCrisis, detectHarmToOthers } from "../src/lib/crisis";
@@ -40,7 +40,7 @@ async function consult(consultation: string): Promise<void> {
   }
 
   const startedAt = Date.now();
-  const shelf = shelfSchema.catch("bible").parse(process.argv[2]);
+  const shelf = shelfSchema.catch("classics").parse(process.argv[2]);
   // 2. 箇所の選択・本文・解説・結論(LLM)
   const counsel = await generateCounsel(consultation, {
     shelf,
