@@ -19,7 +19,7 @@ export default async function PreviewPage({ params }: PageProps<"/dev/preview/[s
       <header className="flex flex-col items-center gap-3 pt-10 text-center">
         <Star size={22} className="fill-gold" />
         <h1 className="font-serif text-[clamp(26px,7vw,42px)] font-semibold">
-          聖書に、聞いてみる。
+          聖書を、開いてみる。
         </h1>
       </header>
       <CounselForm initial={initial} />
