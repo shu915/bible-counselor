@@ -214,12 +214,20 @@ describe("failedBeforeReachingAi(数えるか・数えないか)", () => {
   const error = (kind: ConstructorParameters<typeof OpenRouterError>[2], status?: number) =>
     new OpenRouterError("x", status, kind);
 
-  it("設定の誤り・接続できない・HTTP エラー(402・403・429・5xx)は、AI に届いていない → 数えない", () => {
+  it("設定の誤り・接続できない・処理されていないことが確実な HTTP エラー(402・429・503)は、AI に届いていない → 数えない", () => {
     expect(failedBeforeReachingAi(error("config"), 0)).toBe(true);
     expect(failedBeforeReachingAi(error("network"), 0)).toBe(true);
-    for (const status of [402, 403, 429, 500, 503]) {
+    for (const status of [402, 429, 503]) {
       expect(failedBeforeReachingAi(error("http", status), 0)).toBe(true);
     }
+  });
+
+  it("403(入力の審査で返ることがある)・500・502・504(生成が進んだあとで返ることがある)は、数える", () => {
+    for (const status of [403, 500, 502, 504]) {
+      expect(failedBeforeReachingAi(error("http", status), 0)).toBe(false);
+    }
+    // 状態が分からない HTTP エラーも、数える
+    expect(failedBeforeReachingAi(error("http"), 0)).toBe(false);
   });
 
   it("1回の待ち時間の超過(timeout)と、全体の締め切りの超過(deadline)は、分からない → 数える", () => {

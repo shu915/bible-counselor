@@ -53,12 +53,15 @@ function buildNotices(shelf: ShelfId): readonly { title: string; body: string }[
   ];
 }
 
-// いつも見せる、最小限の3行(詳しい説明は、折りたたむ)。読まれないほど長くしない
-const SUMMARY: readonly string[] = [
-  "相談は無料です(管理人の AI の利用枠を、少し使います)。1日に使える回数には、上限があります。",
-  "書いた内容と、AI の返答は、このサイトでは保存しません。ただし、AI の事業者には送られます。画面を閉じると消え、同じ文章は、もう作れません。必要なら、ご自身で保管してください。",
-  "AI は、間違えることがあります。見当違いな答えが返ってくることもあります。大事なところは、ご自身で確かめてください。",
-];
+// いつも見せる、最小限の行(詳しい説明は、折りたたむ)。読まれないほど長くしない
+function buildSummary(shelf: ShelfId): readonly string[] {
+  return [
+    `悩みのほかに、人物や書物を指名して、聞くこともできます。たとえば、${SHELF_INFO[shelf].askExamples}`,
+    "相談は無料です(管理人の AI の利用枠を、少し使います)。1日に使える回数には、上限があります。",
+    "書いた内容と、AI の返答は、このサイトでは保存しません。ただし、AI の事業者には送られます。画面を閉じると消え、同じ文章は、もう作れません。必要なら、ご自身で保管してください。",
+    "AI は、間違えることがあります。見当違いな答えが返ってくることもあります。大事なところは、ご自身で確かめてください。",
+  ];
+}
 
 function Chevron() {
   return (
@@ -92,7 +95,7 @@ export function Notices({ shelf = "bible" }: { shelf?: ShelfId }) {
         ご利用にあたって
       </h2>
       <ul className="flex flex-col gap-2.5">
-        {SUMMARY.map((line) => (
+        {buildSummary(shelf).map((line) => (
           <li key={line} className="flex gap-3 text-sm leading-[1.85]">
             <span aria-hidden="true" className="mt-2.5 size-1.5 flex-none rotate-45 bg-gold" />
             <span>{line}</span>

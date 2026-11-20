@@ -157,17 +157,24 @@ export async function reserve(
   };
 }
 
+// 相手が、処理せずに返したと確実に言える HTTP の状態(枠を戻してよい)
+const NOT_PROCESSED_STATUSES: ReadonlySet<number> = new Set([402, 429, 503]);
+
 // 失敗が、「AI に届かなかった」ものか(true なら、数えない。枠を戻す)。
 // - **この相談の中で、AI が1回でも答えていれば(successfulCalls > 0)、戻さない**。途中まで成功して(費用がかかって)、
 //   最後の生成が失敗したときに、全部戻すと、生成が不安定な間、枠を減らさずに、実費をかけて使えてしまう
-// - 設定の誤り・接続できない・相手が HTTP エラーを返した(402・403・429・5xx など)→ 届いていない
+// - 設定の誤り・接続できない → 届いていない
+// - 相手が HTTP エラーを返した: 戻すのは、処理されていないことが確実な 402(キーの上限)・429(混み合い)・503 だけ。
+//   502・504 などは、生成が進んだあとで返ることがあり(課金されうる)、403 は、入力の審査で返ることがある
+//   (戻すと、審査に引っかかる入力を、無料で何度も試せる)ので、数える
 // - 1回の待ち時間の超過・全体の締め切りの超過 → 分からない(数える。安全側。届いて、生成中かもしれない)
 // - AI が答えたが、使えなかった(本文が空・形が違う)・解説の検証に失敗 → 答えている(数える)
 // - それ以外(保管先の失敗など)→ 数える(AI を呼んだあとに起きる失敗が多い)
 export function failedBeforeReachingAi(error: unknown, successfulCalls: number): boolean {
   if (successfulCalls > 0) return false;
   if (error instanceof OpenRouterError) {
-    return error.kind === "config" || error.kind === "network" || error.kind === "http";
+    if (error.kind === "config" || error.kind === "network") return true;
+    return error.kind === "http" && NOT_PROCESSED_STATUSES.has(error.status ?? 0);
   }
   return false;
 }
