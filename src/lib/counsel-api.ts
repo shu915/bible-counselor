@@ -55,11 +55,10 @@ export async function runCounsel(
 
   const passages = usable.map((passage): PassageView => ({
     reference: passage.reference,
-    // LLM が書いた本文は、すべて、画面に出す(引用の範囲を、あとから切らない)。全文を開く、の折りたたみは、出ない
+    // LLM が書いた本文は、すべて、画面に出す(引用の範囲を、あとから切らない)
     verses: passage.verses.map((v) => ({
       label: v.label,
       text: v.text,
-      inQuote: true,
       core: v.core,
     })),
     commentary: clip(passage.commentary, MAX_COMMENTARY_CHARS),

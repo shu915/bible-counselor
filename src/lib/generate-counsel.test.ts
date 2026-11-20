@@ -196,8 +196,8 @@ describe("generateCounsel", () => {
     expect(system).toContain("自信のない箇所は、選ばない");
     expect(system).toContain("逆に働く");
     expect(system).toContain("「空である」「苦しい」で終わる箇所は、最後にしない");
-    // 本文: 口語訳を、一字一句、正確に。上限と、触れてよい節
-    expect(system).toContain("一字一句、正確に");
+    // 本文: 内容を正確に、現代の日本語で(一字一句の一致は求めない)。上限と、触れてよい節
+    expect(system).toContain("その節の内容を、正確に、現代の日本語で書く");
     expect(system).toContain("上限は、8節・450字");
     expect(system).toContain("責めるように、罰するように、見下すように読める節");
     expect(system).toContain("verses に書いた節にだけ触れる");
@@ -255,6 +255,9 @@ describe("人物や書物の指名", () => {
         expect(system).not.toContain("その人物を描いた古典");
       } else {
         expect(system).toContain("その人物を描いた古典");
+        // 存命の人物(ホリエモン・孫正義など)は、どの棚でも、引かず、別の棚へも案内しない
+        expect(system).toContain("ホリエモン・孫正義");
+        expect(system).toContain("別の棚へも、案内しない");
       }
       expect(system).toContain("現代の創作の台詞は、引かない");
       expect(system).toContain("安全の規則");
@@ -269,7 +272,7 @@ describe("人物や書物の指名", () => {
     const year = new Date().getFullYear() - 71;
     expect(classicsSystem).toContain("著作権が切れている人(" + year + "年以前に亡くなった人");
     expect(classicsSystem).toContain("夏目漱石");
-    expect(classicsSystem).toContain("ブルデュー・バタイユ・ボストロム");
+    expect(classicsSystem).toContain("ブルデュー・バタイユなど");
     expect(classicsSystem).not.toContain("${");
     expect(chat.chatText.mock.calls.at(-1)?.[0].system).toContain(
       "黙って、いつもの書物に切り替えない",
@@ -284,6 +287,7 @@ describe("人物や書物の指名", () => {
     expect(realismSystem).toContain("一覧にない人物や書物でも、この系統なら、範囲の中");
     expect(realismSystem).toContain("ナポレオン");
     expect(realismSystem).toContain("チャーチルなど");
+    expect(realismSystem).toContain("存命の方の言葉は、取り扱っていません");
     expect(realismSystem).not.toContain("${");
     // 一般古典は、そういう人物が指名されたら、リアリズムの棚を案内する
     await generateCounsel("悩み", { shelf: "classics" });

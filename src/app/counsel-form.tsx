@@ -1,7 +1,7 @@
 "use client";
 
 // 相談の画面。見た目は Claude Design の見本(クラスだけ。構造・role・aria は変えない)。文言は、このコードが正。
-// 悩みを書く → 前置き → [引用 → その直下に解説] ×3 → 結論 → 注意書き。核心の節は <strong>、段落の全文は <details>。
+// 悩みを書く → 前置き → [引用 → その直下に解説] ×3 → 結論 → 注意書き。核心の節は <strong>。
 // ユーザーの入力と結果は、画面の状態にだけ持つ(保存しない・ログに出さない・localStorage にも入れない)。
 import { useEffect, useRef, useState } from "react";
 import {
@@ -65,24 +65,6 @@ function CrisisNotice({ size }: { size: "panel" | "aside" }) {
   );
 }
 
-function Chevron() {
-  return (
-    <svg
-      aria-hidden="true"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="flex-none stroke-gold-ink transition-transform duration-200 group-open:rotate-180"
-    >
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  );
-}
-
 function Result({ result, shelf }: { result: Done; shelf: ShelfId }) {
   return (
     <div className="flex flex-col gap-[clamp(44px,9vw,64px)]">
@@ -100,8 +82,6 @@ function Result({ result, shelf }: { result: Done; shelf: ShelfId }) {
         </p>
       )}
       {result.passages.map((passage, i) => {
-        const quoted = passage.verses.filter((v) => v.inQuote);
-        const hasMore = quoted.length < passage.verses.length;
         return (
           <article key={i} className="flex flex-col">
             <div
@@ -112,19 +92,8 @@ function Result({ result, shelf }: { result: Done; shelf: ShelfId }) {
                 <span>{passage.reference}</span>
               </h2>
               <blockquote className="mb-2 flex flex-col gap-3">
-                <Verses verses={quoted.length > 0 ? quoted : passage.verses} />
+                <Verses verses={passage.verses} />
               </blockquote>
-              {hasMore && (
-                <details className="group border-t border-line">
-                  <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 pt-1.5 text-sm leading-[1.6] font-medium [&::-webkit-details-marker]:hidden">
-                    この段落の全文を開く({passage.verses.length}節)
-                    <Chevron />
-                  </summary>
-                  <blockquote className="mt-2 mb-2.5 flex flex-col gap-3">
-                    <Verses verses={passage.verses} />
-                  </blockquote>
-                </details>
-              )}
             </div>
             <div aria-hidden="true" className="ml-[clamp(26px,6vw,42px)] h-6.5 w-px bg-gold" />
             <p className="px-[clamp(8px,3vw,20px)] text-base leading-loose text-pretty">
@@ -155,17 +124,10 @@ function Result({ result, shelf }: { result: Done; shelf: ShelfId }) {
   );
 }
 
-// initial は、開発用の見本ページ(/dev/preview)が、API を呼ばずに各状態を出すためのもの
-export function CounselForm({
-  initial,
-  shelf = "bible",
-}: {
-  initial?: { text: string; view: View };
-  shelf?: ShelfId;
-}) {
+export function CounselForm({ shelf = "bible" }: { shelf?: ShelfId }) {
   const info = SHELF_INFO[shelf];
-  const [text, setText] = useState(initial?.text ?? "");
-  const [view, setView] = useState<View>(initial?.view ?? { status: "idle" });
+  const [text, setText] = useState("");
+  const [view, setView] = useState<View>({ status: "idle" });
   const controller = useRef<AbortController | null>(null);
   const loading = view.status === "loading";
   const loadingRef = useRef<HTMLDivElement | null>(null);

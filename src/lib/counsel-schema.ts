@@ -22,10 +22,8 @@ export type CounselRequestInput = z.input<typeof counselRequestSchema>;
 const verseViewSchema = z.object({
   // 節の表示用の番号(例: "3"、2節まとめなら "3-4")
   label: z.string(),
-  // 節の本文(AI が、口語訳の記憶から書いたもの)
+  // 節の本文(AI が、記憶から、現代の日本語で書いたもの)
   text: z.string(),
-  // AI が選んだ「意味が通じる範囲」に入っているか(false の節は、「全文を開く」に入る)
-  inQuote: z.boolean(),
   // その中の、核心の節か(画面で太字にする)
   core: z.boolean(),
 });
@@ -34,7 +32,7 @@ export type VerseView = z.infer<typeof verseViewSchema>;
 const passageViewSchema = z.object({
   // 「書名 章:節」(例: マタイによる福音書 6:19-24)
   reference: z.string(),
-  // 節の並び。inQuote の節を初めに見せて、残りは「全文を開く」にする
+  // 節の並び(AI が書いた本文は、すべて画面に出す)
   verses: z.array(verseViewSchema),
   // 解説(AI が書いたもの。引用の直下に出す)
   commentary: z.string(),
