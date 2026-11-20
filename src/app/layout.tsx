@@ -29,12 +29,9 @@ export const metadata: Metadata = {
 // 保存した昼夜の設定を、描画の前に反映する(ちらつき防止)。保存できない環境でも、止まらない
 const THEME_SCRIPT = `try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
 
-// ホーム画面や、ブラウザの上端の色。昼夜で分ける(ダークのとき、上端が明るいままにならない)
+// ホーム画面や、ブラウザの上端の色。ページの上端は、昼夜どちらでも紺のヘッダー(globals.css の --header)なので、同じ色にする
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf7f0" },
-    { media: "(prefers-color-scheme: dark)", color: "#12161f" },
-  ],
+  themeColor: "#17213a",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
