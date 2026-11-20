@@ -4,8 +4,8 @@
 
 ## 目的
 
-- 悩み・愚痴・弱音・懺悔などに、古典の言葉で寄り添うアプリを、それなりに実用的に仕上げて、デプロイする。本棚は3つ: 一般古典(`/`)・聖書(`/bible`)・リアリズム(`/realism`。孫子・韓非子・君主論など。励まさず、責めず、欺かず、勝ち目を上げる手を示す)。処理は、3つの棚で同じ。違うのは、プロンプト(`shelf-prompts.ts`、聖書は `generate-counsel.ts`)と、見た目と文言(`shelves.ts`・`shelf-frame.tsx`・`shelf-mark.tsx`・`globals.css` の `[data-shelf]`)だけ
-- 公開は、1つのサブドメイン(`shelf.<メインのドメイン>`)に、パスで棚を分ける。リポジトリ名は `shu-bookshelf`(ローカルのフォルダ名は、そのまま)
+- 悩み・愚痴・弱音・懺悔などに、古典の言葉で寄り添い、「この人は、なんと言った?」「この本には、なんて書いてある?」「この用語は、どういう意味?」にも、古典の言葉で答えるアプリを、それなりに実用的に仕上げて、デプロイする(はじまりは悩みの相談で、指名・用語へ広がった)。本棚は3つ: 一般古典(`/`)・聖書(`/bible`)・リアリズム(`/realism`。孫子・韓非子・君主論など。励まさず、責めず、欺かず、勝ち目を上げる手を示す)。処理は、3つの棚で同じ。違うのは、プロンプト(`shelf-prompts.ts`、聖書は `generate-counsel.ts`)と、見た目と文言(`shelves.ts`・`shelf-frame.tsx`・`shelf-mark.tsx`・`globals.css` の `[data-shelf]`)だけ
+- 公開は、1つのサブドメイン(`bookshelf.<メインのドメイン>`。公開済み。noindex のまま)に、パスで棚を分ける。リポジトリ名は `shu-bookshelf`(ローカルのフォルダ名は、そのまま)
 - ユーザーにとって大事なのは、**心の支えになること**。RAG かどうかは、ユーザーには見えない
 
 ## 経緯
@@ -27,6 +27,7 @@
 3. 各引用の **直下** に、ユーザーの相談に絡めた解説を表示する
 4. 最後に全体をまとめた **結論** を出す
 
+- **人物・書物・用語の指名**: 相談文に指名があれば優先する。著作権が切れている人(没後70年を過ぎた人)だけ引き、存命の方の言葉は引かない。本文は、AI が自分の言葉の現代語で書く。規則は、プロンプトの頼みで、コードでは守れない。詳細は [docs/safety.md](docs/safety.md) の 5
 - **古典の時代にない話題**(AI・ビットコインなど): 「それは聖書には載っていませんが」(聖書以外の棚は「古典には」)と最初に断り、一度抽象化した主題(例: 富への執着、新しい技術への不安)に置き換えて回答する
 - **プライバシー**: ユーザーの入力と AI の返答は **保存しない**(DB もログも、認証・会話履歴もない)
 - **回数制限**(ログインなしで誰でも使えるため、費用を守る): ①IP 単位の1日の回数(最初は5回、環境変数で変える) ②全体の1日の上限(環境変数) ③OpenRouter 側の月の上限。AI に届かなかった失敗は数えない、答えたあとの失敗は数える。記録は「IP のハッシュ・日付・回数」だけ。詳細は [docs/rate-limit.md](docs/rate-limit.md)
@@ -35,9 +36,9 @@
 ## 技術スタック
 
 - Next.js (App Router) / TypeScript / Tailwind CSS / zod(外から来るデータの検証)
-- 回数を数える保管先: Upstash Redis(`@upstash/redis`、HTTP)。本番は Vercel の Marketplace から追加。開発は、メモリの中で数える
-- デプロイ: Vercel
-- LLM: OpenRouter 経由(契約済み)。箇所の選択・本文・解説・結論は、`anthropic/claude-sonnet-5.5`(`OPENROUTER_WRITING_MODEL`)。予備に `google/gemini-4-hydrogen`(`OPENROUTER_CHAT_MODEL`)
+- 回数を数える保管先: Upstash Redis(`@upstash/redis`、HTTP)。本番は、Upstash(本家)で作って、接続情報を Vercel の環境変数に入れる。開発は、メモリの中で数える
+- デプロイ: Vercel(サブドメインで公開。DNS は Xserver で、プロキシなしの CNAME)。手順は [docs/deploy.md](docs/deploy.md)
+- LLM: OpenRouter 経由(契約済み)。モデルは環境変数で決める(`OPENROUTER_WRITING_MODEL` があればそれ、なければ `OPENROUTER_CHAT_MODEL`、それもなければ `google/gemini-4-hydrogen`)。費用の実測(docs/cost.md)は、`anthropic/claude-sonnet-5.5` の公開価格で計算した(実際に使ったモデルは、OpenRouter の履歴で確かめる)
 
 ## AI(OpenRouter)の規則
 
@@ -68,12 +69,12 @@
 
 - `npm run dev` / `build` / `lint` / `typecheck` / `test`(Vitest)/ `format` / `format:check`
 - `npm run check` = lint + format:check + typecheck(**テストは含まない**)。コミット前に `npm run format` をかける
-- `npm run counsel`(ターミナルから相談する。OpenRouter を呼ぶ)
+- `npm run counsel [classics|bible|realism]`(ターミナルから相談する。棚の省略は classics。OpenRouter を呼ぶ。1 回 約 $0.02〜0.03)
 
 ## コミットと hooks
 
 - **人が頼むまで、コミットしない**。作業ブランチを切って進める
-- **main へは直接プッシュできない**(Ruleset `protect-main`。まだ設定していなければ、リポジトリを作ったあとで設定する)。作業ブランチをプッシュして PR を作り、CI の `check` が成功してからマージする
+- **main へは直接プッシュできない**(Ruleset `protect-main`。設定済み)。作業ブランチをプッシュして PR を作り、CI の `check` が成功してからマージする
 - コミットメッセージ・PR・コード中のコメントは日本語。PR の本文は「概要 / 確認したこと / 未確認・注意」の順
 - `.claude/hooks/guard-pre.sh` が、危険な操作(`.env*`、`git clean` / `reset --hard` / `push --force`、`rm -r`、`package-lock.json`・XML・生成 JSON の編集、`.claude/hooks/` と `settings.json` の編集など)をブロックする。**ブロックされたら回避せず、理由を報告して指示を待つ**。ガードは事故防止であって、悪意への防御ではない
 - コマンドを `&&` でつなぐと、誤検知でブロックされることがある。分けて実行する
