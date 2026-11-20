@@ -46,7 +46,7 @@ export function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={next === "dark" ? "ダークモードにする" : "ライトモードにする"}
-      className="absolute top-4 right-4 flex size-11 cursor-pointer items-center justify-center rounded-full border-[1.5px] border-gold bg-surface text-gold-ink shadow-card hover:border-primary hover:text-primary"
+      className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-white/28 bg-transparent text-header-ink hover:border-white"
     >
       {theme === "dark" ? (
         // 夜のとき: 太陽(押すと、昼になる)
