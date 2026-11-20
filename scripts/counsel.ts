@@ -68,7 +68,7 @@ async function consult(consultation: string): Promise<void> {
   console.log(
     `\n(${seconds}秒 / トークン: 入力 ${counsel.usage.promptTokens ?? 0} 出力 ${counsel.usage.completionTokens ?? 0})`,
   );
-  console.log("(本文は、AI が口語訳の記憶から書いたもの。言い回しが、違うことがある)");
+  console.log("(本文は、AI が記憶から書いたもの。実際の訳と、言い回しが違うことがある)");
 }
 
 async function main(): Promise<void> {

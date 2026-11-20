@@ -8,6 +8,9 @@ import type { CounterStore } from "./rate-limit";
 
 type Env = Record<string, string | undefined>;
 
+// 直したキーに付ける有効期限(rate-limit.ts の TTL_SECONDS と同じ。2日)
+const COUNTER_TTL_SECONDS = 2 * 24 * 60 * 60;
+
 // Upstash の標準の名前(UPSTASH_REDIS_REST_*)と、Vercel の Marketplace が入れる名前(KV_REST_API_*)の、どちらでも読む
 function readCredentials(env: Env): { url: string; token: string } | undefined {
   const url = env.UPSTASH_REDIS_REST_URL || env.KV_REST_API_URL;
@@ -45,10 +48,15 @@ export function createRedisStore(redis: Redis): CounterStore {
     },
     async decr(key) {
       const next = await redis.decr(key);
-      // キーが、期限で消えたあとに戻すと、マイナスになる。0 に直す
+      // キーが、期限で消えたあとに戻すと、マイナスになる。0 に直す。
+      // SET で上書きすると、間に入った別の INCR が消え、期限も付かないので、INCR(で1つ戻す)+ EXPIRE にする
       if (next < 0) {
-        await redis.set(key, 0);
-        return 0;
+        const [fixed] = await redis
+          .pipeline()
+          .incr(key)
+          .expire(key, COUNTER_TTL_SECONDS)
+          .exec<[number, number]>();
+        return fixed;
       }
       return next;
     },

@@ -63,9 +63,9 @@ describe("runCounsel", () => {
     expect(view.reference).toBe("マタイによる福音書 6:19-21");
     expect(view.commentary).toBe("宝のある所に心もある、という言葉です。");
     expect(view.verses).toEqual([
-      { label: "19", text: "地上に宝をたくわえるな。", inQuote: true, core: false },
-      { label: "20", text: "天に宝をたくわえよ。", inQuote: true, core: false },
-      { label: "21", text: "宝のある所に心もある。", inQuote: true, core: true },
+      { label: "19", text: "地上に宝をたくわえるな。", core: false },
+      { label: "20", text: "天に宝をたくわえよ。", core: false },
+      { label: "21", text: "宝のある所に心もある。", core: true },
     ]);
   });
 
