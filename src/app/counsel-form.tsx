@@ -132,7 +132,7 @@ export function CounselForm({ shelf = "bible" }: { shelf?: ShelfId }) {
   const loading = view.status === "loading";
   const loadingRef = useRef<HTMLDivElement | null>(null);
 
-  // 送信ボタン(「聖書を開く」など)を押したら、待ちの表示が見える位置までスクロールする(下に出ることに気づかない人がいるため)
+  // 送信ボタン(「聖書をめくる」など)を押したら、待ちの表示が見える位置までスクロールする(下に出ることに気づかない人がいるため)
   useEffect(() => {
     if (view.status !== "loading") return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

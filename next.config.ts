@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
-  // 検索エンジンに載せない(試してもらう段階。広く公開するときに外す)。
+  // 検索エンジンに載せない(広く公開する予定はない。費用の都合)。
   // ヘッダーは HTML 以外(画像・API)にも効き、layout.tsx の meta は、HTML を保存して使い回されても残る(二重にしてある)
   // あわせて、定番のセキュリティヘッダーを付ける(枠で包まれて偽の画面にされない・種類の取り違えをさせない・外へ住所を渡しすぎない・使わない機能を切る)。
   // CSP は、frame-ancestors だけ(Next.js の埋め込みスクリプトと、昼夜の script を壊さないため。script-src は付けない)
